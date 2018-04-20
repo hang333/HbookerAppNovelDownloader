@@ -3,9 +3,11 @@ from bookshelf import *
 
 try:
     import HbookerAPI
-except Exception as e:
-    print('[错误]', e)
+except Exception as er:
+    print('[错误]', er)
     print('[错误]', '请先安装requests库pycrypto或pycryptodome')
+    input()
+    exit()
 import re
 
 
@@ -64,40 +66,32 @@ def shell_config(inputs):
 
 def shell_bookshelf(inputs):
     if len(inputs) >= 2:
-        try:
-            Vars.current_bookshelf = get_bookshelf_by_index(inputs[1])
-            if Vars.current_bookshelf is None:
-                print('[提示]', '请输入正确的参数')
-            else:
-                print('[提示]', '已经选择书架: "' + Vars.current_bookshelf.shelf_name + '"')
-                Vars.current_bookshelf.get_book_list()
-                Vars.current_bookshelf.show_book_list()
-        except Exception as e:
-            print('[错误]', e)
-            print('选择书架时出错')
+        Vars.current_bookshelf = get_bookshelf_by_index(inputs[1])
+        if Vars.current_bookshelf is None:
+            print('[提示]', '请输入正确的参数')
+        else:
+            print('[提示]', '已经选择书架: "' + Vars.current_bookshelf.shelf_name + '"')
+            Vars.current_bookshelf.get_book_list()
+            Vars.current_bookshelf.show_book_list()
     else:
         refresh_bookshelf_list()
 
 
 def shell_books(inputs):
     if len(inputs) >= 2:
-        try:
-            Vars.current_book = Vars.current_bookshelf.get_book(inputs[1])
-            if Vars.current_book is None:
-                response = HbookerAPI.Book.get_info_by_id(inputs[1])
-                if response.get('code') == '100000':
-                    Vars.current_book = Book(None, response['data']['book_info'])
-                else:
-                    print('[提示]', '获取书籍信息失败, book_id:', inputs[1])
-                    return
-            print('[提示]', '已经选择书籍《' + Vars.current_book.book_name + '》')
-            Vars.current_book.get_division_list()
-            Vars.current_book.get_chapter_catalog()
-            Vars.current_book.show_division_list()
-            Vars.current_book.show_chapter_latest()
-        except Exception as e:
-            print('[错误]', e)
-            print('选择书籍时出错')
+        Vars.current_book = Vars.current_bookshelf.get_book(inputs[1])
+        if Vars.current_book is None:
+            response = HbookerAPI.Book.get_info_by_id(inputs[1])
+            if response.get('code') == '100000':
+                Vars.current_book = Book(None, response['data']['book_info'])
+            else:
+                print('[提示]', '获取书籍信息失败, book_id:', inputs[1])
+                return
+        print('[提示]', '已经选择书籍《' + Vars.current_book.book_name + '》')
+        Vars.current_book.get_division_list()
+        Vars.current_book.get_chapter_catalog()
+        Vars.current_book.show_division_list()
+        Vars.current_book.show_chapter_latest()
     else:
         if Vars.current_bookshelf is None:
             print('[提示]', '未选择书架')
@@ -110,45 +104,32 @@ def shell_download(inputs):
     if Vars.cfg.data.get('downloaded_book_id_list') is None:
         Vars.cfg.data['downloaded_book_id_list'] = []
     if inputs.count('-a') > 0:
-        try:
-            for book in Vars.current_bookshelf.BookList:
-                book.get_division_list()
-                book.get_chapter_catalog()
-                book.download_chapter(copy_dir=os.getcwd() + '/../Hbooker/downloads')
-                Vars.cfg.data['downloaded_book_id_list'].append(book.book_id)
-                Vars.cfg.save()
-        except Exception as e:
-            print('[错误]', e)
-            print('下载书架全部书籍时出错')
-        finally:
-            return
+        for book in Vars.current_bookshelf.BookList:
+            book.get_division_list()
+            book.get_chapter_catalog()
+            book.download_chapter(copy_dir=os.getcwd() + '/../Hbooker/downloads')
+            Vars.cfg.data['downloaded_book_id_list'].append(book.book_id)
+            Vars.cfg.save()
     if Vars.current_book is None:
         print('[提示]', '未选择书籍')
         return
     if inputs.count('-d') > 0:
-        try:
-            if len(inputs) > inputs.index('-d') + 1:
-                Vars.current_book.download_division(inputs[inputs.index('-d') + 1])
-            else:
-                print('-d 参数出错')
-        except Exception as e:
-            print('[错误]', e)
-            print('下载书籍分卷时出错')
-        finally:
-            return
+        if len(inputs) > inputs.index('-d') + 1:
+            Vars.current_book.download_division(inputs[inputs.index('-d') + 1])
+        else:
+            print('-d 参数出错')
+        return
     chapter_index_start = None
     chapter_index_end = None
     if inputs.count('-s') > 0:
-        try:
+        if len(inputs) > inputs.index('-s') + 1:
             chapter_index_start = inputs[inputs.index('-s') + 1]
-        except Exception as e:
-            print('[错误]', e)
+        else:
             print('-s 参数出错')
     if inputs.count('-e') > 0:
-        try:
+        if len(inputs) > inputs.index('-e') + 1:
             chapter_index_end = inputs[inputs.index('-e') + 1]
-        except Exception as e:
-            print('[错误]', e)
+        else:
             print('-e 参数出错')
     Vars.current_book.download_chapter(chapter_index_start, chapter_index_end)
     Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
@@ -174,27 +155,24 @@ def shell():
     for info in Vars.help_info:
         print('[帮助]', info)
     while True:
-        try:
-            inputs = re.split('\s+', get('>').strip())
-            if inputs[0].startswith('q'):
-                exit()
-            elif inputs[0].startswith('l'):
-                shell_login(inputs)
-            elif inputs[0].startswith('c'):
-                shell_config(inputs)
-            elif inputs[0].startswith('h'):
-                for info in Vars.help_info:
-                    print('[帮助]', info)
-            elif inputs[0].startswith('books'):
-                shell_bookshelf(inputs)
-            elif inputs[0].startswith('b'):
-                shell_books(inputs)
-            elif inputs[0].startswith('d'):
-                shell_download(inputs)
-            elif inputs[0].startswith('u'):
-                shell_update()
-        except Exception as e:
-            print('[错误]', e)
+        inputs = re.split('\s+', get('>').strip())
+        if inputs[0].startswith('q'):
+            exit()
+        elif inputs[0].startswith('l'):
+            shell_login(inputs)
+        elif inputs[0].startswith('c'):
+            shell_config(inputs)
+        elif inputs[0].startswith('h'):
+            for info in Vars.help_info:
+                print('[帮助]', info)
+        elif inputs[0].startswith('books'):
+            shell_bookshelf(inputs)
+        elif inputs[0].startswith('b'):
+            shell_books(inputs)
+        elif inputs[0].startswith('d'):
+            shell_download(inputs)
+        elif inputs[0].startswith('u'):
+            shell_update()
 
 
 Vars.cfg.load()

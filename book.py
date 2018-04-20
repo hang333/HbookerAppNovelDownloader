@@ -82,7 +82,9 @@ class Book:
             chapter_index_end = chapter_index_start
         print('[提示][下载]', '开始下载: 起始章节编号:', chapter_index_start, ', 终止章节编号:', chapter_index_end)
         for i in range(chapter_index_start, chapter_index_end + 1):
-            self.download_single(i)
+            if self.download_single(i) is False:
+                print('[提示][下载]', '遇到未付费章节，跳过之后所有章节')
+                break
         self.epub.export()
         self.epub.export_txt()
         print('[提示][下载]', '《' + self.book_name + '》下载已完成')
@@ -124,7 +126,9 @@ class Book:
             if self.config.data.get('last_chapter_index') is None:
                 self.config.data['last_chapter_index'] = 1
             for chapter_index in self.division_chapter_index[division_name]:
-                self.download_single(chapter_index)
+                if self.download_single(chapter_index) is False:
+                    print('[提示][下载]', '遇到未付费章节，跳过之后所有章节')
+                    break
             self.epub.export()
             self.epub.export_txt()
             print('[提示][下载]', '《' + self.book_name + '》' + division_name, '下载已完成')
@@ -135,13 +139,13 @@ class Book:
         i = int(i)
         if self.config.data['downloaded_list'].count(i) > 0:
             print('[提示][下载]', '编号:', i, ' 已下载，跳过')
-            return
+            return True
         chapter_id = self.chapter_list[i - 1]['chapter_id']
         response = HbookerAPI.Chapter.get_chapter_command(chapter_id)
         if response.get('code') == '100000':
             chapter_command = response['data']['command']
             response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, chapter_command)
-            if response2.get('code') == '100000':
+            if response2.get('code') == '100000' and response2['data']['chapter_info'].get('chapter_title') is not None:
                 print('[提示][下载]', '编号:', i, ', id:', chapter_id, ', 标题:',
                       response2['data']['chapter_info']['chapter_title'])
                 if response2['data']['chapter_info']['auth_access'] == '1':
@@ -152,5 +156,7 @@ class Book:
                     self.config.data['downloaded_list'].append(i)
                     self.config.data['last_chapter_index'] = max(i, self.config.data['last_chapter_index'])
                     self.config.save()
+                    return True
                 else:
                     print('[提示][下载]', '该章节未付费，无法下载')
+                    return False
