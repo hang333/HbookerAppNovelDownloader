@@ -5,11 +5,12 @@ import os
 class Config:
     file_path = None
     dir_path = None
-    data = {}
+    data = None
 
     def __init__(self, file_path, dir_path):
         self.file_path = file_path
         self.dir_path = dir_path
+        self.data = {}
 
     def load(self):
         try:

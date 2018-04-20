@@ -16,7 +16,7 @@ class BookShelf:
     shelf_name = None
     shelf_index = None
     book_limit = None
-    BookList = []
+    BookList = None
 
     def __init__(self, data):
         self.shelf_id = data['shelf_id']
@@ -24,6 +24,7 @@ class BookShelf:
         self.shelf_name = data['shelf_name']
         self.shelf_index = data['shelf_index']
         self.book_limit = data['book_limit']
+        self.BookList = []
 
     def show_info(self):
         print('书架编号:', self.shelf_index, ', 书架名:', self.shelf_name)

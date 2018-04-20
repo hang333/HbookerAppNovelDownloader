@@ -11,22 +11,22 @@ def setcommonparams(params):
 def get(apiurl, params=commonparams, **kwargs):
     if params is not None:
         params.update(commonparams)
-    apiurl = apiurl.replace('https://app.hbooker.com/', '')
+    apiurl = apiurl.replace(UrlConstants.WEB_SITE, '')
     ret = json.loads(CryptoUtil.decrypt(HttpUtil.get(UrlConstants.WEB_SITE + apiurl, params=params, **kwargs)))
-    print('GET', apiurl)
-    print(params)
-    print(ret)
+    # print('GET', apiurl)
+    # print(params)
+    # print(ret)
     return ret
 
 
 def post(apiurl, data=commonparams, **kwargs):
     if data is not None:
         data.update(commonparams)
-    apiurl = apiurl.replace('https://app.hbooker.com/', '')
+    apiurl = apiurl.replace(UrlConstants.WEB_SITE, '')
     ret = json.loads(CryptoUtil.decrypt(HttpUtil.post(UrlConstants.WEB_SITE + apiurl, data=data, **kwargs)))
-    print('POST', apiurl)
-    print(data)
-    print(ret)
+    # print('POST', apiurl)
+    # print(data)
+    # print(ret)
     return ret
 
 

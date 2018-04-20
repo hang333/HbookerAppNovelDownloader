@@ -1,6 +1,11 @@
 from instance import *
 from bookshelf import *
-import HbookerAPI
+
+try:
+    import HbookerAPI
+except Exception as e:
+    print('[错误]', e)
+    print('[错误]', '请先安装requests库pycrypto或pycryptodome')
 import re
 
 
@@ -67,7 +72,6 @@ def shell_bookshelf(inputs):
                 print('[提示]', '已经选择书架: "' + Vars.current_bookshelf.shelf_name + '"')
                 Vars.current_bookshelf.get_book_list()
                 Vars.current_bookshelf.show_book_list()
-                print('[提示]', '可输入"book <书籍编号>"来选择一本书籍并输入"download <起始章节> <终止章节>"来下载该书籍')
         except Exception as e:
             print('[错误]', e)
             print('选择书架时出错')
@@ -103,21 +107,24 @@ def shell_books(inputs):
 
 
 def shell_download(inputs):
-    if Vars.current_book is None:
-        print('[提示]', '未选择书籍')
-        return
+    if Vars.cfg.data.get('downloaded_book_id_list') is None:
+        Vars.cfg.data['downloaded_book_id_list'] = []
     if inputs.count('-a') > 0:
         try:
             for book in Vars.current_bookshelf.BookList:
+                book.get_division_list()
+                book.get_chapter_catalog()
                 book.download_chapter(copy_dir=os.getcwd() + '/../Hbooker/downloads')
-                if Vars.cfg.data.get('downloaded_book_id_list') is None:
-                    Vars.cfg.data['downloaded_book_id_list'] = []
                 Vars.cfg.data['downloaded_book_id_list'].append(book.book_id)
+                Vars.cfg.save()
         except Exception as e:
             print('[错误]', e)
             print('下载书架全部书籍时出错')
         finally:
             return
+    if Vars.current_book is None:
+        print('[提示]', '未选择书籍')
+        return
     if inputs.count('-d') > 0:
         try:
             if len(inputs) > inputs.index('-d') + 1:
@@ -144,12 +151,14 @@ def shell_download(inputs):
             print('[错误]', e)
             print('-e 参数出错')
     Vars.current_book.download_chapter(chapter_index_start, chapter_index_end)
-    if Vars.cfg.data.get('downloaded_book_id_list') is None:
-        Vars.cfg.data['downloaded_book_id_list'] = []
     Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
+    Vars.cfg.save()
 
 
 def shell_update():
+    if Vars.cfg.data.get('downloaded_book_id_list') is None:
+        print('[提示]', '暂无已下载书籍')
+        return
     for book_id in Vars.cfg.data['downloaded_book_id_list']:
         response = HbookerAPI.Book.get_info_by_id(book_id)
         if response.get('code') == '100000':
@@ -167,7 +176,9 @@ def shell():
     while True:
         try:
             inputs = re.split('\s+', get('>').strip())
-            if inputs[0].startswith('l'):
+            if inputs[0].startswith('q'):
+                exit()
+            elif inputs[0].startswith('l'):
                 shell_login(inputs)
             elif inputs[0].startswith('c'):
                 shell_config(inputs)

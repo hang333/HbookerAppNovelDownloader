@@ -5,7 +5,9 @@ class Vars:
     cfg = Config(os.getcwd() + '/../Hbooker/config.json', os.getcwd() + "/../Hbooker")
     current_bookshelf = None
     current_book = None
-    help_info = ['login <用户名> <密码> \t 登录欢乐书客帐号',
+    help_info = ['下载的书籍文件、缓存和配置文件在../Hbooker/下',
+                 'quit \t 退出脚本',
+                 'login <用户名> <密码> \t 登录欢乐书客帐号',
                  'config load \t 重新加载配置文件',
                  'config save \t 保存配置文件',
                  'config set <配置项> [值] \t 设置配置项的值(空值表示删除)',
