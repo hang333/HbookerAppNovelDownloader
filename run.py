@@ -108,8 +108,9 @@ def shell_download(inputs):
             book.get_division_list()
             book.get_chapter_catalog()
             book.download_chapter(copy_dir=os.getcwd() + '/../Hbooker/downloads')
-            Vars.cfg.data['downloaded_book_id_list'].append(book.book_id)
-            Vars.cfg.save()
+            if Vars.cfg.data['downloaded_book_id_list'].count(book.book_id) == 0:
+                Vars.cfg.data['downloaded_book_id_list'].append(book.book_id)
+                Vars.cfg.save()
     if Vars.current_book is None:
         print('[提示]', '未选择书籍')
         return
@@ -132,8 +133,9 @@ def shell_download(inputs):
         else:
             print('-e 参数出错')
     Vars.current_book.download_chapter(chapter_index_start, chapter_index_end)
-    Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
-    Vars.cfg.save()
+    if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
+        Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
+        Vars.cfg.save()
 
 
 def shell_update():

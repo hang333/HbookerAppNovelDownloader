@@ -72,14 +72,15 @@ class Book:
             self.config.data['downloaded_list'] = []
         if self.config.data.get('last_chapter_index') is None:
             self.config.data['last_chapter_index'] = 1
-        chapter_index_start = int(chapter_index_start or 1)
+        chapter_index_start = int(chapter_index_start or self.config.data['last_chapter_index'])
         chapter_index_end = int(chapter_index_end or len(self.chapter_list))
         if chapter_index_start < 1:
             chapter_index_start = 1
         if chapter_index_end > len(self.chapter_list):
             chapter_index_end = len(self.chapter_list)
         if chapter_index_start > chapter_index_end:
-            chapter_index_end = chapter_index_start
+            print('[提示][下载]', '《' + self.book_name + '》无需下载')
+            return
         print('[提示][下载]', '开始下载: 起始章节编号:', chapter_index_start, ', 终止章节编号:', chapter_index_end)
         for i in range(chapter_index_start, chapter_index_end + 1):
             if self.download_single(i) is False:
