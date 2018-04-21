@@ -59,20 +59,14 @@ class Book:
         if len(self.chapter_list) == 0:
             print('[提示]', '暂无书籍目录')
             return
-        self.file_path = os.getcwd() + '/../Hbooker/' + self.book_name + '/' + self.book_name + '.epub'
-        self.epub = EpubFile(self.file_path,
-                             os.getcwd() + '/../Hbooker/cache/' + self.book_name, self.book_id, self.book_name,
-                             self.author_name)
-        print('[提示][下载]', '文件名:', self.book_name + '.epub')
-        self.epub.setcover(self.cover)
         self.config = Config(os.getcwd() + '/../Hbooker/' + self.book_name + '/config.json',
                              os.getcwd() + '/../Hbooker/' + self.book_name)
         self.config.load()
         if self.config.data.get('downloaded_list') is None:
             self.config.data['downloaded_list'] = []
         if self.config.data.get('last_chapter_index') is None:
-            self.config.data['last_chapter_index'] = 1
-        chapter_index_start = int(chapter_index_start or self.config.data['last_chapter_index'])
+            self.config.data['last_chapter_index'] = 0
+        chapter_index_start = int(chapter_index_start or int(self.config.data['last_chapter_index']) + 1)
         chapter_index_end = int(chapter_index_end or len(self.chapter_list))
         if chapter_index_start < 1:
             chapter_index_start = 1
@@ -81,6 +75,12 @@ class Book:
         if chapter_index_start > chapter_index_end:
             print('[提示][下载]', '《' + self.book_name + '》无需下载')
             return
+        self.file_path = os.getcwd() + '/../Hbooker/' + self.book_name + '/' + self.book_name + '.epub'
+        self.epub = EpubFile(self.file_path,
+                             os.getcwd() + '/../Hbooker/cache/' + self.book_name, self.book_id, self.book_name,
+                             self.author_name)
+        print('[提示][下载]', '《' + self.book_name + '》', '文件名:', self.book_name + '.epub')
+        self.epub.setcover(self.cover)
         print('[提示][下载]', '开始下载: 起始章节编号:', chapter_index_start, ', 终止章节编号:', chapter_index_end)
         for i in range(chapter_index_start, chapter_index_end + 1):
             if self.download_single(i) is False:
@@ -110,22 +110,22 @@ class Book:
         if division_name is None:
             print('[提示]', '分卷编号不正确')
             return
-        print('[提示]', '下载分卷:', division_name)
+        print('[提示]', '《' + self.book_name + '》', '下载分卷:', division_name)
         if len(self.division_chapter_index.get(division_name)) > 0:
-            self.file_path = os.getcwd() + '/../Hbooker/' + self.book_name + '/' + self.book_name + '-' + division_name + '.epub'
-            self.epub = EpubFile(
-                self.file_path,
-                os.getcwd() + '/../Hbooker/cache/' + self.book_name + '-' + division_name, self.book_id, self.book_name,
-                self.author_name)
-            print('[提示][下载]', '文件名:', self.book_name + '-' + division_name + '.epub')
-            self.epub.setcover(self.cover)
             self.config = Config(os.getcwd() + '/../Hbooker/' + self.book_name + '-' + division_name + '/config.json',
                                  os.getcwd() + '/../Hbooker/' + self.book_name + '-' + division_name)
             self.config.load()
             if self.config.data.get('downloaded_list') is None:
                 self.config.data['downloaded_list'] = []
             if self.config.data.get('last_chapter_index') is None:
-                self.config.data['last_chapter_index'] = 1
+                self.config.data['last_chapter_index'] = 0
+            self.file_path = os.getcwd() + '/../Hbooker/' + self.book_name + '/' + self.book_name + '-' + division_name + '.epub'
+            self.epub = EpubFile(
+                self.file_path,
+                os.getcwd() + '/../Hbooker/cache/' + self.book_name + '-' + division_name, self.book_id, self.book_name,
+                self.author_name)
+            print('[提示][下载]', '《' + self.book_name + '》', '文件名:', self.book_name + '-' + division_name + '.epub')
+            self.epub.setcover(self.cover)
             for chapter_index in self.division_chapter_index[division_name]:
                 if self.download_single(chapter_index) is False:
                     print('[提示][下载]', '遇到未付费章节，跳过之后所有章节')
@@ -161,3 +161,9 @@ class Book:
                 else:
                     print('[提示][下载]', '该章节未付费，无法下载')
                     return False
+            else:
+                self.config.data['downloaded_list'].append(i)
+                self.config.data['last_chapter_index'] = max(i, self.config.data['last_chapter_index'])
+                self.config.save()
+                print('[提示][下载]', '编号:', i, ', id:', chapter_id, ', 该章节为空章节，标记为已下载')
+                return True

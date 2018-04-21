@@ -111,6 +111,8 @@ def shell_download(inputs):
             if Vars.cfg.data['downloaded_book_id_list'].count(book.book_id) == 0:
                 Vars.cfg.data['downloaded_book_id_list'].append(book.book_id)
                 Vars.cfg.save()
+        print('[提示]', '书架下载已完成')
+        return
     if Vars.current_book is None:
         print('[提示]', '未选择书籍')
         return
@@ -151,6 +153,7 @@ def shell_update():
             Vars.current_book.download_chapter(copy_dir=os.getcwd() + '/../Hbooker/updates')
         else:
             print('[提示]', '获取书籍信息失败, book_id:', book_id)
+    print('[提示]', '书籍更新已完成')
 
 
 def shell():
