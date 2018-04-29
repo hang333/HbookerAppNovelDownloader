@@ -154,12 +154,9 @@ class Book:
                     content = HbookerAPI.CryptoUtil.decrypt(response2['data']['chapter_info']['txt_content'],
                                                             chapter_command).decode('utf-8')
                     if content.find('\n') + 1 < len(content):
-                        content = content[content.find('\n') + 1:]
                         if content[-1] == '\n':
                             content = content[:-2]
                         content = content.replace('\n', '</p>\r\n<p>')
-                    else:
-                        content = ''
                     author_say = response2['data']['chapter_info']['author_say'].replace('\r', '')
                     author_say = author_say.replace('\n', '</p>\r\n<p>')
                     self.epub.addchapter(str(i), chapter_id, response2['data']['chapter_info']['chapter_title'],
