@@ -42,7 +42,7 @@ class EpubFile:
 
     def __init__(self, filepath: str, tempdir: str, book_id: str, book_title: str, book_author: str):
         self._filepath = filepath
-        self._tempdir = tempdir
+        self._tempdir = tempdir.replace("?","？")
         if not os.path.isdir(tempdir):
             os.makedirs(tempdir)
         _template = zipfile.ZipFile(os.getcwd() + "/template/template.epub")
