@@ -92,6 +92,7 @@ class Book:
         print('[提示][下载]', '《' + self.book_name + '》下载已完成')
         try:
             if copy_dir is not None:
+                copy_dir=copy_dir.replace("?","？")
                 file_dir, file_name = os.path.split(self.file_path)
                 if not os.path.isdir(copy_dir):
                     os.makedirs(copy_dir)
