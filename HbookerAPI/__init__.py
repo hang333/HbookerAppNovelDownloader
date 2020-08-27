@@ -1,7 +1,7 @@
 from HbookerAPI import HttpUtil, CryptoUtil, UrlConstants
 import json
 
-commonparams = {'account': None, 'login_token': None, 'app_version': '1.5.520'}
+commonparams = {'account': None, 'login_token': None, 'app_version': '2.6.011'}
 
 
 def setcommonparams(params):
