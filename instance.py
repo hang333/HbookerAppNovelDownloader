@@ -2,27 +2,27 @@ from config import *
 
 
 class Vars:
-    cfg = Config(os.getcwd() + '/../Hbooker/config.json', os.getcwd() + "/../Hbooker")
+    cfg = Config('HbookerAppNovelDownloader - Config.json', os.getcwd())
     current_bookshelf = None
     current_book = None
-    help_info = ['下载的书籍文件、缓存和配置文件在../Hbooker/下',
-                 'quit \t 退出脚本',
-                 'login <用户名> <密码> \t 登录欢乐书客帐号',
-                 'config load \t 重新加载配置文件',
-                 'config save \t 保存配置文件',
-                 'config set <配置项> [值] \t 设置配置项的值(空值表示删除)',
-                 'help \t 用法与帮助',
-                 'bookshelf \t 刷新并显示当前书架列表',
-                 'bookshelf <书架编号> \t 切换书架',
-                 'book \t 刷新并显示当前书架的书籍列表',
-                 'book <书籍编号/书籍ID> \t 选择书籍',
-                 'download \t 下载书籍(无-s和-e参数则下载全本)\n'
-                 '\t参数列表\n'
-                 '\t-a \t 下载当前书架所有书籍\n'
-                 '\t-d <分卷编号> \t 下载指定分卷\n'
-                 '\t-s <起始章节编号> \t 从指定章节开始下载\n'
-                 '\t-e <终止章节编号> \t 下载到指定章节为止',
-                 'update \t 更新已下载的所有书籍并复制到updates文件夹']
+    help_info = \
+        """HbookerAppNovelDownloader 刺蝟貓 / 歡樂書客 小說下載器
+請閱讀README.md
+指令(指令輸入字首即可):
+h | help\t\t\t\t\t\t\t--- 顯示用法與幫助 (顯示此訊息)
+q | quit\t\t\t\t\t\t\t--- 退出腳本
+l | login <手機號/郵箱/用戶名> <密碼>\t\t\t\t--- 登錄歡樂書客帳號
+t | task\t\t\t\t\t\t\t--- 執行每日簽到，領代幣 (正常來說，已經自動執行，不需再次執行)
+s | bookshelf\t\t\t\t\t\t\t--- 刷新並顯示當前書架列表 (啟動時會自動刷新1次)
+s <書架編號> | shelf <書架編號>\t\t\t\t\t--- 選擇與切換書架
+b | book\t\t\t\t\t\t\t--- 刷新並顯示當前書架的書籍列表
+b <書籍編號/書籍ID> | book <書籍編號/書籍ID>\t\t\t--- 選擇書籍
+d | download\t\t\t\t\t\t\t--- 下載當前書籍(book時選擇的書籍)
+d <書籍編號/書籍ID> | download <書籍編號/書籍ID>\t\t--- 下載指定ID書籍
+ds <書架編號> | downloadshelf <書架編號> \t\t\t--- 下載整個書架
+u | update\t\t\t\t\t\t\t--- 下載"list.txt"中的所有書籍
+u <list_path.txt> | update <list_path.txt>\t\t\t--- 下載指定檔案"list_path.txt"中的所有書籍
+"""
 
 
 def get(prompt, default=None):

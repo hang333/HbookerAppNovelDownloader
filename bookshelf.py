@@ -27,7 +27,7 @@ class BookShelf:
         self.BookList = []
 
     def show_info(self):
-        print('书架编号:', self.shelf_index, ', 书架名:', self.shelf_name)
+        print('書架编號:', self.shelf_index, ', 書架名:', self.shelf_name)
 
     def get_book_list(self):
         response = HbookerAPI.BookShelf.get_shelf_book_list(self.shelf_id)
@@ -40,10 +40,9 @@ class BookShelf:
 
     def show_book_list(self):
         for book in self.BookList:
-            print('书籍编号:', book.index, ', 标题:', book.book_name, ', 作者:',
-                  book.author_name)
-            print('  最新章节:', book.last_chapter_info['chapter_title'], ', 更新时间:',
-                  book.last_chapter_info['uptime'])
+            print('《', book.book_name, '》作者:', book.author_name, '\n書籍编號:', book.index, ', 書籍ID:', book.book_id)
+            print('更新時間:', book.last_chapter_info['uptime'], '\n最新章節:', book.last_chapter_info['chapter_title'], '\n')
+        print()
 
     def get_book(self, index):
         for book in self.BookList:

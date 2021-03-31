@@ -2,7 +2,8 @@ import HbookerAPI
 from config import *
 from Epub import *
 import os
-import shutil
+import threading
+import queue
 
 
 class Book:
@@ -20,7 +21,7 @@ class Book:
     config = None
     file_path = None
 
-    def __init__(self, index, book_info):
+    def __init__(self, index, book_info, max_concurrent_downloads: int = 32):
         self.index = index
         self.book_info = book_info
         self.book_id = book_info['book_id']
@@ -32,184 +33,280 @@ class Book:
         self.chapter_list = []
         self.division_chapter_list = {}
 
+        self.get_chapter_catalog_mt_dl_lock = threading.Lock()
+        self.concurrent_download_queue = queue.Queue()
+        for item in range(max_concurrent_downloads):
+            self.concurrent_download_queue.put(item)
+
+        self.process_finished_count = 0
+        self.downloaded_count = 0
+
+        self.config = Config(os.getcwd() + '/Cache/book-' + self.fix_illegal_book_name() + '.json', os.getcwd() +
+                             '/Cache/')
+        # self.config.load()
+
     def get_division_list(self):
-        print('[提示]', '正在获取书籍分卷...')
+        # print('[提示]', '正在获取书籍分卷...')
+        print('正在獲取書籍分卷...', end='')
         response = HbookerAPI.Book.get_division_list(self.book_id)
         if response.get('code') == '100000':
             self.division_list = response['data']['division_list']
+        else:
+            print("分捲獲取失敗: " + str(response))
 
     def show_division_list(self):
+        print('\r', end='')
         for division in self.division_list:
-            print('分卷编号:', division['division_index'], ', 分卷名:', division['division_name'])
+            print('分卷編號:' + division['division_index'].rjust(3, " ") + ' 共:' +
+                  str(len(self.division_chapter_list[division['division_name']])).rjust(4, " ") +
+                  ' 章 分卷名: ' + division['division_name'])
+
+    def get_chapter_catalog_get_thread(self, division):
+        response = HbookerAPI.Book.get_chapter_update(division['division_id'])
+        if response.get('code') == '100000':
+            self.get_chapter_catalog_mt_dl_lock.acquire()
+            self.chapter_list.extend(response['data']['chapter_list'])
+            self.division_chapter_list[division['division_name']] = response['data']['chapter_list']
+            self.get_chapter_catalog_mt_dl_lock.release()
+        else:
+            print("章節獲取失敗: " + division['division_name'] + ": " + str(response))
 
     def get_chapter_catalog(self):
-        print('[提示]', '正在获取书籍目录...')
+        print('正在獲取書籍目錄...')
         self.chapter_list.clear()
+        # total = len(self.division_list)
+        # count = 1
+        download_threads = []
         for division in self.division_list:
-            response = HbookerAPI.Book.get_chapter_update(division['division_id'])
-            if response.get('code') == '100000':
-                self.chapter_list.extend(response['data']['chapter_list'])
-                self.division_chapter_list[division['division_name']] = response['data']['chapter_list']
-        self.chapter_list.sort(key=lambda x : int(x['chapter_index']))
+            # print("\r" + str(count) + " / " + str(total) + "...", end="")
+            # count += 1
+            # response = HbookerAPI.Book.get_chapter_update(division['division_id'])
+            # if response.get('code') == '100000':
+            #     self.chapter_list.extend(response['data']['chapter_list'])
+            #     self.division_chapter_list[division['division_name']] = response['data']['chapter_list']
+            get_thread = threading.Thread(target=self.get_chapter_catalog_get_thread, args=(division,))
+            download_threads.append(get_thread)
+            get_thread.start()
+        for get_thread in download_threads:
+            get_thread.join()
+        self.chapter_list.sort(key=lambda x: int(x['chapter_index']))
+        print("\r", end="")
 
-    def show_chapter_latest(self):
-        print('\t最新章节: \t章节编号:', self.chapter_list[-1]['chapter_index'], ', 章节标题:',
-              self.chapter_list[-1]['chapter_title'])
+    def show_latest_chapter_(self):
+        print('  最新章節, 編號: ', self.chapter_list[-1]['chapter_index'], ', 更新時間:', self.last_chapter_info['uptime'],
+              '\n  章節:', self.chapter_list[-1]['chapter_title'])
 
-    def download_chapter(self, chapter_index_start=None, chapter_index_end=None, copy_dir=None):
-        if len(self.chapter_list) == 0:
-            print('[提示]', '暂无书籍目录')
-            return
-        self.config = Config(os.getcwd() + '/../Hbooker/' + self.book_name + '/config.json',
-                             os.getcwd() + '/../Hbooker/' + self.book_name)
-        self.config.load()
-        if self.config.data.get('downloaded_list') is None:
-            self.config.data['downloaded_list'] = []
-        if self.config.data.get('last_chapter_index') is None:
-            self.config.data['last_chapter_index'] = 0
-        chapter_index_start = int(chapter_index_start or int(self.config.data['last_chapter_index']) + 1)
-        chapter_index_end = int(chapter_index_end or len(self.chapter_list))
-        if chapter_index_start < 1:
-            chapter_index_start = 1
-        if chapter_index_end > len(self.chapter_list):
-            chapter_index_end = len(self.chapter_list)
-        if chapter_index_start > chapter_index_end:
-            print('[提示][下载]', '《' + self.book_name + '》无需下载')
-            return
-        self.file_path = os.getcwd() + '/../Hbooker/' + self.book_name + '/' + self.book_name + '.epub'
-        self.epub = EpubFile(self.file_path,
-                             os.getcwd() + '/../Hbooker/cache/' + self.book_name, self.book_id, self.book_name,
-                             self.author_name)
-        print('[提示][下载]', '《' + self.book_name + '》', '文件名:', self.book_name + '.epub')
-        self.epub.setcover(self.cover)
-        print('[提示][下载]', '开始下载: 起始章节编号:', chapter_index_start, ', 终止章节编号:', chapter_index_end)
-        for i in range(chapter_index_start, chapter_index_end + 1):
-            if self.download_single(i) is False:
-                print('[提示][下载]', '遇到未付费章节，跳过之后所有章节')
-                break
-        self.epub.export()
-        self.epub.export_txt()
-        print('[提示][下载]', '《' + self.book_name + '》下载已完成')
-        try:
-            if copy_dir is not None:
-                copy_dir=copy_dir.replace("?","？")
-                file_dir, file_name = os.path.split(self.file_path)
-                if not os.path.isdir(copy_dir):
-                    os.makedirs(copy_dir)
-                shutil.copyfile(self.file_path, copy_dir + '/' + file_name)
-                shutil.copyfile(self.file_path.replace('epub', 'txt'),
-                                copy_dir + '/' + file_name.replace('epub', 'txt'))
-        except Exception as e:
-            print('[错误]', e)
-            print('复制文件时出错')
+    def fix_illegal_book_name(self):
+        return self.book_name.replace('<', '＜').replace('>', '＞').replace(':', '：').replace('"', '“') \
+            .replace('/', '╱').replace('|', '｜').replace('?', '？').replace('*', '＊')
 
-    def download_division(self, division_index):
+    def show_chapter_list_order_division(self):
+        for division in self.division_list:
+            chapter_order = 1
+            print('分卷:', division['division_index'], ',:', division['division_name'])
+            for chapter_info in self.division_chapter_list[division['division_name']]:
+                print(' ' + chapter_info['chapter_index'] + ', ' + division['division_index'] + "-" +
+                      str(chapter_order) + "-" + str(chapter_info['chapter_id']) + ' ' + division['division_name'] +
+                      '：' + chapter_info['chapter_title'])
+                chapter_order += 1
+
+    def download_book_multithreading(self, ):
+        self.file_path = './Hbooker/' + self.fix_illegal_book_name() + '/' + self.fix_illegal_book_name() + '.epub '
+        self.epub = EpubFile(self.file_path, './Cache/' + self.fix_illegal_book_name(), self.book_id,
+                             self.book_name,
+                             self.author_name, read_old_epub=False)
+        self.epub.set_cover(self.cover)
+
+        threads = []
+        # for every chapter in order of division
+        for division in self.division_list:
+            chapter_order = 1
+            # print('分卷編號:', division['division_index'], ', 分卷名:', division['division_name'])
+            for chapter_info in self.division_chapter_list[division['division_name']]:
+                # print("ch_info_index: ", chapter_info['chapter_index'], " ch_info_id", chapter_info['chapter_id'])
+                if chapter_info['is_valid'] == '0':
+                    # 處理屏蔽章節
+                    self.process_finished_count += 1
+                    f_name = division['division_index'].rjust(4, "0") + '-' + str(chapter_order).rjust(6, "0") + '-' + \
+                        chapter_info['chapter_id']
+                    if os.path.exists(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml'):
+                        if os.path.getsize(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml') == 0:
+                            # self.add_download_finished_count()
+                            print('\r' + chapter_info['chapter_index'].rjust(5, "0") + ', ' + division[
+                                'division_index'].rjust(4, "0") + "-" +
+                                  str(chapter_order).rjust(6, "0") + "-" + str(chapter_info['chapter_id']) +
+                                  ".xhtml，章節遭屏蔽，無法下載，以空檔案標記。\n" + division['division_name'] + '：' + chapter_info[
+                                      'chapter_title'] +
+                                  "\n" + str(self.downloaded_count) + ' / ' + str(
+                                self.process_finished_count) + " / " + str(
+                                len(self.chapter_list)), end=' ')
+                        else:
+                            print('\r' + chapter_info['chapter_index'].rjust(5, "0") + ', ' + division[
+                                'division_index'].rjust(4, "0") + "-" +
+                                  str(chapter_order).rjust(6, "0") + "-" + str(chapter_info['chapter_id']) +
+                                  ".xhtml，章節屏蔽無法下載，使用本地檔案。\n" + division['division_name'] + '：' + chapter_info[
+                                      'chapter_title'] +
+                                  "\n" + str(self.downloaded_count) + ' / ' + str(
+                                self.process_finished_count) + " / " + str(
+                                len(self.chapter_list)), end=' ')
+                    else:
+                        # 如無檔案 建立空檔
+                        with codecs.open(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml', 'w', 'utf-8') as _file:
+                            pass
+                        print('\r' + chapter_info['chapter_index'].rjust(5, "0") + ', ' + division[
+                            'division_index'].rjust(4, "0") + "-" +
+                              str(chapter_order).rjust(6, "0") + "-" + str(chapter_info['chapter_id']) +
+                              ".xhtml，章節屏蔽無法下載，以空檔案標記。\n" + division['division_name'] + '：' + chapter_info[
+                                  'chapter_title'] +
+                              "\n" + str(self.downloaded_count) + ' / ' + str(
+                            self.process_finished_count) + " / " + str(
+                            len(self.chapter_list)), end=' ')
+
+                elif chapter_info['auth_access'] == '0':
+                    # 跳過未購買章節
+                    self.process_finished_count += 1
+                    print(
+                        '\r' + chapter_info['chapter_index'].rjust(5, "0") + ', ' +
+                        division['division_index'].rjust(4, "0") + '-' + str(chapter_order).rjust(6, "0") + '-' +
+                        chapter_info['chapter_id'] + '，該章節未訂閱無法下載。\n' + division['division_name'] + '：' +
+                        chapter_info['chapter_title'] + "\n" + str(self.downloaded_count) + ' / ' +
+                        str(self.process_finished_count) + " / " + str(len(self.chapter_list)), end=' ')
+                else:
+                    download_thread = threading.Thread(target=self.download_book_mt_get_chapter,
+                                                       args=(chapter_info['chapter_index'], chapter_info['chapter_id'],
+                                                             division['division_index'], chapter_order,))
+                    threads.append(download_thread)
+                    download_thread.start()
+                chapter_order += 1
+        for thread in threads:
+            thread.join()
+        print("\n\n下載完畢...匯出書籍...", end='')
+
+        if self.downloaded_count == 0:
+            if os.path.exists(self.epub.tempdir + '/OEBPS/Text'):
+                text_mod_time = os.path.getmtime(self.epub.tempdir + '/OEBPS/Text')
+            else:
+                text_mod_time = 0
+            if os.path.exists('Hbooker/' + self.fix_illegal_book_name() + '/' + self.fix_illegal_book_name() + '.epub'):
+                epub_mod_time = os.path.getmtime(
+                    'Hbooker/' + self.fix_illegal_book_name() + '/' + self.fix_illegal_book_name() + '.epub')
+            else:
+                epub_mod_time = 0
+            if text_mod_time >= epub_mod_time:
+                if not os.path.isdir("Hbooker"):
+                    os.makedirs("Hbooker")
+                if not os.path.isdir("Hbooker/" + self.fix_illegal_book_name()):
+                    os.makedirs("Hbooker/" + self.fix_illegal_book_name())
+                self.epub.make_cover_text(self.book_info['book_name'], self.book_info['author_name'],
+                                          self.book_info['description'], self.book_info['uptime'])
+                self.epub.download_book_mt_write_chapter(self.division_chapter_list)
+                # self.config.data['book_info'] = self.book_info
+                # self.config.data['division_chapter_list'] = self.division_chapter_list
+                # self.config.save()
+                print("匯出完成...\n\n")
+            else:
+                print("書籍無更新...\n\n")
+        else:
+            if not os.path.isdir("Hbooker"):
+                os.makedirs("Hbooker")
+            if not os.path.isdir("Hbooker/" + self.fix_illegal_book_name()):
+                os.makedirs("Hbooker/" + self.fix_illegal_book_name())
+            self.epub.make_cover_text(self.book_info['book_name'], self.book_info['author_name'],
+                                      self.book_info['description'], self.book_info['uptime'])
+            self.epub.download_book_mt_write_chapter(self.division_chapter_list)
+            # self.config.data['book_info'] = self.book_info
+            # self.config.data['division_chapter_list'] = self.division_chapter_list
+            # self.config.save()
+            print("匯出完成...\n\n")
+
+        self.process_finished_count = 0
+        self.downloaded_count = 0
+
+    def download_book_mt_get_chapter(self, chapter_index, chapter_id, division_index, chapter_order):
         division_name = None
         for division in self.division_list:
             if division['division_index'] == division_index:
                 division_name = division['division_name']
-                break
-        if division_name is None:
-            print('[提示]', '分卷编号不正确')
-            return
-        print('[提示]', '《' + self.book_name + '》', '下载分卷:', division_name)
-        if len(self.division_chapter_list.get(division_name)) > 0:
-            self.config = Config(os.getcwd() + '/../Hbooker/' + self.book_name + '/config-' + division_name + '.json',
-                                 os.getcwd() + '/../Hbooker/' + self.book_name)
-            self.config.load()
-            if self.config.data.get('downloaded_list') is None:
-                self.config.data['downloaded_list'] = []
-            if self.config.data.get('last_chapter_index') is None:
-                self.config.data['last_chapter_index'] = 0
-            self.file_path = os.getcwd() + '/../Hbooker/' + self.book_name + '/' + self.book_name + '-' + division_name + '.epub'
-            self.epub = EpubFile(
-                self.file_path,
-                os.getcwd() + '/../Hbooker/cache/' + self.book_name + '-' + division_name, self.book_id, self.book_name,
-                self.author_name)
-            print('[提示][下载]', '《' + self.book_name + '》', '文件名:', self.book_name + '-' + division_name + '.epub')
-            self.epub.setcover(self.cover)
-            for chapter_info in self.division_chapter_list[division_name]:
-                if self.download_single_by_id(chapter_info['chapter_index'], chapter_info['chapter_id']) is False:
-                    print('[提示][下载]', '遇到未付费章节，跳过之后所有章节')
-                    break
-            self.epub.export()
-            self.epub.export_txt()
-            print('[提示][下载]', '《' + self.book_name + '》' + division_name, '下载已完成')
-        else:
-            print('[提示]', '该分卷暂无章节')
-
-    def download_single(self, i):
-        i = int(i)
-        if self.config.data['downloaded_list'].count(i) > 0:
-            print('[提示][下载]', '编号:', i, ' 已下载，跳过')
-            return True
-        chapter_id = self.chapter_list[i - 1]['chapter_id']
-        response = HbookerAPI.Chapter.get_chapter_command(chapter_id)
-        if response.get('code') == '100000':
-            chapter_command = response['data']['command']
-            response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, chapter_command)
-            if response2.get('code') == '100000' and response2['data']['chapter_info'].get('chapter_title') is not None:
-                print('[提示][下载]', '编号:', i, ', chapter_id:', chapter_id, ', 标题:',
-                      response2['data']['chapter_info']['chapter_title'])
-                if response2['data']['chapter_info']['auth_access'] == '1':
-                    content = HbookerAPI.CryptoUtil.decrypt(response2['data']['chapter_info']['txt_content'],
-                                                            chapter_command).decode('utf-8')
-                    if content.find('\n') + 1 < len(content):
-                        if content[-1] == '\n':
-                            content = content[:-2]
-                        content = content.replace('\n', '</p>\r\n<p>')
-                    author_say = response2['data']['chapter_info']['author_say'].replace('\r', '')
-                    author_say = author_say.replace('\n', '</p>\r\n<p>')
-                    self.epub.addchapter(str(i), chapter_id, response2['data']['chapter_info']['chapter_title'],
-                                         '<p>' + content + '</p>\r\n<p>' + author_say + '</p>')
-                    self.config.data['downloaded_list'].append(i)
-                    self.config.data['last_chapter_index'] = max(i, self.config.data['last_chapter_index'])
-                    self.config.save()
-                    return True
-                else:
-                    print('[提示][下载]', '该章节未付费，无法下载')
-                    return False
+        chapter_title = None
+        if division_name is not None:
+            chapter_title = self.division_chapter_list[division_name][chapter_order - 1]['chapter_title']
+        f_name = division_index.rjust(4, "0") + '-' + str(chapter_order).rjust(6, "0") + '-' + chapter_id
+        if os.path.exists(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml'):
+            if os.path.getsize(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml') == 0:
+                # 章節檔案大小為0 重新下載
+                print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + "-" +
+                      str(chapter_order).rjust(6, "0") + "-" + str(chapter_id) +
+                      ".xhtml，發現缺失章節(空檔案)，重新下載。\n" + division_name + '：' + chapter_title +
+                      "\n" + str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
+                    len(self.chapter_list)), end=' ')
             else:
-                self.config.data['downloaded_list'].append(i)
-                self.config.data['last_chapter_index'] = max(i, self.config.data['last_chapter_index'])
-                self.config.save()
-                print('[提示][下载]', '编号:', i, ', chapter_id:', chapter_id, ', 该章节为空章节，标记为已下载')
+                # 章節已經下載過 跳過
+                self.add_process_finished_count()
+                print('\r' + str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
+                    len(self.chapter_list)), end=' ')
+                self.get_chapter_catalog_mt_dl_lock.release()
                 return True
 
-    def download_single_by_id(self, chapter_index, chapter_id):
-        chapter_index = int(chapter_index)
+        q_item = self.concurrent_download_queue.get()
         response = HbookerAPI.Chapter.get_chapter_command(chapter_id)
         if response.get('code') == '100000':
             chapter_command = response['data']['command']
             response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, chapter_command)
+            self.concurrent_download_queue.put(q_item)
             if response2.get('code') == '100000' and response2['data']['chapter_info'].get('chapter_title') is not None:
-                print('[提示][下载]', '编号:', chapter_index, ', chapter_id:', chapter_id, ', 标题:',
-                      response2['data']['chapter_info']['chapter_title'])
                 if response2['data']['chapter_info']['auth_access'] == '1':
                     content = HbookerAPI.CryptoUtil.decrypt(response2['data']['chapter_info']['txt_content'],
                                                             chapter_command).decode('utf-8')
                     if content.find('\n') + 1 < len(content):
                         content = content[content.find('\n') + 1:]
                         if content[-1] == '\n':
-                            content = content[:-2]
+                            content = content[:-1]
                         content = content.replace('\n', '</p>\r\n<p>')
                     else:
                         content = ''
+                    # 下載成功
                     author_say = response2['data']['chapter_info']['author_say'].replace('\r', '')
                     author_say = author_say.replace('\n', '</p>\r\n<p>')
-                    self.epub.addchapter(str(chapter_index), chapter_id, response2['data']['chapter_info']['chapter_title'],
-                                         '<p>' + content + '</p>\r\n<p>' + author_say + '</p>')
-                    self.config.data['downloaded_list'].append(chapter_index)
-                    self.config.data['last_chapter_index'] = max(chapter_index, self.config.data['last_chapter_index'])
-                    self.config.save()
+                    self.epub.add_chapter_mt(chapter_id, division_name,
+                                             response2['data']['chapter_info']['chapter_title'], '<p>' + content +
+                                             '</p>\r\n<p>' + author_say + '</p>', division_index, chapter_order)
+                    self.add_process_finished_count()
+                    self.downloaded_count += 1
+                    print('\r' + str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
+                        len(self.chapter_list)), end=' ')
+                    self.get_chapter_catalog_mt_dl_lock.release()
                     return True
                 else:
-                    print('[提示][下载]', '该章节未付费，无法下载')
+                    self.add_process_finished_count()
+                    print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
+                          str(chapter_order).rjust(6, "0") + '-' + chapter_id + '，該章節未訂閱無法下載。\n' +
+                          division_name + '：' + chapter_title + "\n" +
+                          str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
+                        len(self.chapter_list)), end=' ')
+                    self.get_chapter_catalog_mt_dl_lock.release()
                     return False
             else:
-                self.config.data['downloaded_list'].append(chapter_index)
-                self.config.data['last_chapter_index'] = max(chapter_index, self.config.data['last_chapter_index'])
-                self.config.save()
-                print('[提示][下载]', '编号:', chapter_index, 'chapter_id:', chapter_id, ', 该章节为空章节，标记为已下载')
+                with codecs.open(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml', 'w', 'utf-8') as _file:
+                    pass
+                self.add_process_finished_count()
+                print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
+                      str(chapter_order).rjust(6, "0") + '-' + chapter_id +
+                      ".xhtml，章節缺失以空檔案標記。\n" + division_name + '：' + chapter_title + "\n" +
+                      str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
+                    len(self.chapter_list)), end=' ')
+                self.get_chapter_catalog_mt_dl_lock.release()
                 return True
+        else:
+            self.concurrent_download_queue.put(q_item)
+            self.add_process_finished_count()
+            print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
+                  str(chapter_order).rjust(6, "0") + '-' + chapter_id + "，錯誤。\n" +
+                  division_name + '：' + chapter_title + "\n" +
+                  str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
+                len(self.chapter_list)), end=' ')
+            self.get_chapter_catalog_mt_dl_lock.release()
+            return False
 
+    def add_process_finished_count(self):
+        self.get_chapter_catalog_mt_dl_lock.acquire()
+        self.process_finished_count += 1

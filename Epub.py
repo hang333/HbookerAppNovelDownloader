@@ -3,8 +3,12 @@ import re
 import os
 import codecs
 import urllib.request
+from os import path
+import time
+import datetime
+import shutil
 
-nl = '\r\n'
+set_max_image_retry = 10
 
 
 def str_mid(string: str, left: str, right: str, start=None, end=None):
@@ -16,19 +20,43 @@ def str_mid(string: str, left: str, right: str, start=None, end=None):
     return ''
 
 
-def getallfiles(dirpath: str):
+def get_all_files(dir_path: str):
     result = list()
-    for _name in os.listdir(dirpath):
-        if os.path.isdir(dirpath + '/' + _name):
-            result.extend(getallfiles(dirpath + '/' + _name))
+    for _name in os.listdir(dir_path):
+        if os.path.isdir(dir_path + '/' + _name):
+            result.extend(get_all_files(dir_path + '/' + _name))
         else:
-            result.append(dirpath + '/' + _name)
+            result.append(dir_path + '/' + _name)
     return result
+
+
+def text_to_html_element_escape(text: str):
+    return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+
+def html_element_to_text_unescape(element: str):
+    return element.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
+
+
+def copy_add_suffix_if_exists_add_index(file_path: str, suffix: str):
+    file_base = os.path.splitext(file_path)[0] + ' ' + suffix
+    file_ext = os.path.splitext(file_path)[1]
+
+    if os.path.exists(file_path):
+        if os.path.exists(file_base + file_ext):
+            index = 1
+            while os.path.exists(file_base + ' ' + str(index) + file_ext):
+                index += 1
+            shutil.copyfile(file_path, file_base + ' ' + str(index) + file_ext)
+        else:
+            shutil.copyfile(file_path, file_base + file_ext)
+    else:
+        print("file dose not exists: " + file_path)
 
 
 class EpubFile:
     _filepath = ''
-    _tempdir = ''
+    tempdir = ''
     _content_opf = ''
     _content_opf_manifest = ''
     _content_opf_spine = ''
@@ -40,12 +68,14 @@ class EpubFile:
     _chapter_format_navMap = ''
     _chapter_format = ''
 
-    def __init__(self, filepath: str, tempdir: str, book_id: str, book_title: str, book_author: str):
+    def __init__(self, filepath: str, tempdir: str, book_id: str, book_title: str, book_author: str,
+                 read_old_epub=True):
         self._filepath = filepath
-        self._tempdir = tempdir.replace("?","？")
+        self.tempdir = tempdir
         if not os.path.isdir(tempdir):
             os.makedirs(tempdir)
-        _template = zipfile.ZipFile(os.getcwd() + "/template/template.epub")
+        _template = zipfile.ZipFile(path.abspath(path.join(path.dirname(__file__), 'template.epub')))
+        self.cover_template = bytes(_template.read('OEBPS/Text/cover.xhtml')).decode()
         self._content_opf = bytes(_template.read('OEBPS/content.opf')).decode()
         self._chapter_format_manifest = str_mid(self._content_opf, '${chapter_format_manifest}={{{', '}}}')
         self._image_format_manifest = str_mid(self._content_opf, '${image_format_manifest}={{{', '}}}')
@@ -53,13 +83,13 @@ class EpubFile:
         self._toc_ncx = bytes(_template.read('OEBPS/toc.ncx')).decode()
         self._chapter_format_navMap = str_mid(self._toc_ncx, '${chapter_format_navMap}={{{', '}}}')
         self._chapter_format = bytes(_template.read('OEBPS/Text/${chapter_format}.xhtml')).decode()
-        if os.path.isfile(filepath):
+        if os.path.isfile(filepath) and read_old_epub:
             try:
                 with zipfile.ZipFile(self._filepath, 'r', zipfile.ZIP_DEFLATED) as _file:
                     try:
                         self._content_opf = bytes(_file.read('OEBPS/content.opf')).decode()
                         self._toc_ncx = bytes(_file.read('OEBPS/toc.ncx')).decode()
-                        _file.extractall(self._tempdir)
+                        _file.extractall(self.tempdir)
                     except (KeyError, NameError, IOError):
                         self._content_opf = bytes(_template.read('OEBPS/content.opf')).decode()
                         self._toc_ncx = bytes(_template.read('OEBPS/toc.ncx')).decode()
@@ -75,28 +105,29 @@ class EpubFile:
         if _init:
             for _name in _template.namelist():
                 if _name.find('$') == -1:
-                    _template.extract(_name, self._tempdir)
+                    if not os.path.exists(tempdir + '/' + _name):
+                        _template.extract(_name, self.tempdir)
             self._content_opf = re.sub(r'\${.*?}={{{[\S\s]*?}}}[\r\n]*', '', self._content_opf)
             self._toc_ncx = re.sub(r'\${.*?}={{{[\S\s]*?}}}[\r\n]*', '', self._toc_ncx)
             self._content_opf_manifest = str_mid(self._content_opf, '<manifest>', '</manifest>')
             self._content_opf_spine = str_mid(self._content_opf, '<spine toc="ncx">', '</spine>')
             self._toc_ncx_navMap = str_mid(self._toc_ncx, '<navMap>', '</navMap>')
             self._content_opf = self._content_opf.replace('${book_id}', book_id)
-            self._content_opf = self._content_opf.replace('${book_title}', book_title)
-            self._content_opf = self._content_opf.replace('${book_author}', book_author)
+            self._content_opf = self._content_opf.replace('${book_title}', text_to_html_element_escape(book_title))
+            self._content_opf = self._content_opf.replace('${book_author}', text_to_html_element_escape(book_author))
             self._toc_ncx = self._toc_ncx.replace('${book_id}', book_id)
-            self._toc_ncx = self._toc_ncx.replace('${book_title}', book_title)
-            self._toc_ncx = self._toc_ncx.replace('${book_author}', book_author)
-            with codecs.open(self._tempdir + '/OEBPS/content.opf', 'w', 'utf-8') as _file:
-                _file.write(self._content_opf)
-            with codecs.open(self._tempdir + '/OEBPS/toc.ncx', 'w', 'utf-8') as _file:
-                _file.write(self._toc_ncx)
+            self._toc_ncx = self._toc_ncx.replace('${book_title}', text_to_html_element_escape(book_title))
+            self._toc_ncx = self._toc_ncx.replace('${book_author}', text_to_html_element_escape(book_author))
+            # with codecs.open(self._tempdir + '/OEBPS/content.opf', 'w', 'utf-8') as _file:
+            #     _file.write(self._content_opf)
+            # with codecs.open(self._tempdir + '/OEBPS/toc.ncx', 'w', 'utf-8') as _file:
+            #     _file.write(self._toc_ncx)
         _template.close()
 
     def _add_manifest_chapter(self, chapter_id: str):
         if self._content_opf_manifest.find('id="' + chapter_id + '.xhtml"') == -1:
             _before = self._content_opf_manifest
-            self._content_opf_manifest += self._chapter_format_manifest.replace('${chapter_id}', chapter_id) + nl
+            self._content_opf_manifest += self._chapter_format_manifest.replace('${chapter_id}', chapter_id) + '\r\n'
             self._content_opf = self._content_opf.replace(
                 '<manifest>' + _before + '</manifest>',
                 '<manifest>' + self._content_opf_manifest + '</manifest>', 1)
@@ -109,115 +140,168 @@ class EpubFile:
             else:
                 _media_type = 'image/jpeg'
             self._content_opf_manifest += self._image_format_manifest.replace('${filename}', filename) \
-                                              .replace('${media_type}', _media_type) + nl
+                                              .replace('${media_type}', _media_type) + '\r\n'
             self._content_opf = self._content_opf.replace(
                 '<manifest>' + _before + '</manifest>',
                 '<manifest>' + self._content_opf_manifest + '</manifest>', 1)
 
     def _add_spine(self, chapter_id: str):
+        # noinspection SpellCheckingInspection
         if self._content_opf_spine.find('idref="' + chapter_id + '.xhtml"') == -1:
             _before = self._content_opf_spine
-            self._content_opf_spine += self._chapter_format_spine.replace('${chapter_id}', chapter_id) + nl
+            self._content_opf_spine += self._chapter_format_spine.replace('${chapter_id}', chapter_id) + '\r\n'
             self._content_opf = self._content_opf.replace(
                 '<spine toc="ncx">' + _before + '</spine>',
                 '<spine toc="ncx">' + self._content_opf_spine + '</spine>', 1)
 
-    def _add_navMap(self, chapter_index: str, chapter_id: str, chapter_title: str):
+    def add_nav_map(self, chapter_index: str, chapter_id: str, chapter_title: str):
         if self._toc_ncx_navMap.find('id="' + chapter_id) == -1:
             _before = self._toc_ncx_navMap
             self._toc_ncx_navMap += self._chapter_format_navMap.replace('${chapter_id}', chapter_id) \
                                         .replace('${chapter_index}', chapter_index) \
-                                        .replace('${chapter_title}', chapter_title) + nl
+                                        .replace('${chapter_title}', chapter_title) + '\r\n'
             self._toc_ncx = self._toc_ncx.replace(
                 '<navMap>' + _before + '</navMap>',
                 '<navMap>' + self._toc_ncx_navMap + '</navMap>', 1)
 
     def _save(self):
-        with codecs.open(self._tempdir + '/OEBPS/content.opf', 'w', 'utf-8') as _file:
+        with codecs.open(self.tempdir + '/OEBPS/content.opf', 'w', 'utf-8') as _file:
             _file.write(self._content_opf)
-        with codecs.open(self._tempdir + '/OEBPS/toc.ncx', 'w', 'utf-8') as _file:
+        with codecs.open(self.tempdir + '/OEBPS/toc.ncx', 'w', 'utf-8') as _file:
             _file.write(self._toc_ncx)
 
-    def setcover(self, url: str):
-        urllib.request.urlretrieve(url, self._tempdir + '/OEBPS/Images/cover.jpg')
-
-    def addchapter(self, chapter_index: str, chapter_id: str, chapter_title: str, chapter_content: str):
-        with codecs.open(self._tempdir + '/OEBPS/Text/' + chapter_id + '.xhtml', 'w', 'utf-8') as _file:
-            _data = self._chapter_format.replace('${chapter_title}', chapter_title) \
-                .replace('${chapter_content}', '<h3>' + chapter_title + '</h3>' + nl + chapter_content)
-            for _img in re.findall(r'<img src="http.*?>', _data):
-                _img = _img.replace('>', ' />')
-                _src = str_mid(_img, '<img src="', '"')
-                if _src.rfind('/') == -1:
-                    continue
-                _filename = _src[_src.rfind('/') + 1:]
-                self.addimage(_filename, _src)
-                _data = _data.replace(_src, '../Images/' + _filename)
-            _file.write(_data)
-        self._add_manifest_chapter(chapter_id)
-        self._add_spine(chapter_id)
-        self._add_navMap(chapter_index, chapter_id, chapter_title)
-
-    def addimage(self, filename: str, url: str):
-        try:
-            urllib.request.urlretrieve(url, self._tempdir + '/OEBPS/Images/' + filename)
-        except (KeyboardInterrupt, InterruptedError) as _e:
-            raise _e
-        except Exception as _e:
-            print("[ERROR]", _e)
-            print("下载插图时出现错误，已跳过")
-            with open(self._tempdir + '/OEBPS/Images/' + filename, 'wb'):
-                pass
-        self._add_manifest_image(filename)
-
-    def addimagechapter(self, chapter_index: str, chapter_id: str, chapter_title: str, image: bytes):
-        self.addchapter(chapter_index, chapter_id, chapter_title,
-                        '<img src="../Images/' + chapter_id + '.png" alt=\'' + chapter_title + '\' />')
-        with open(self._tempdir + '/OEBPS/Images/' + chapter_id + '.png', 'wb') as _file:
-            _file.write(image)
-        self._add_manifest_image(chapter_id + '.png')
-
-    def fixchapter(self, chapter_id: str, chapter_title: str, chapter_content: str):
-        with codecs.open(self._tempdir + '/OEBPS/Text/' + chapter_id + '.xhtml', 'w', 'utf-8') as _file:
-            _data = self._chapter_format.replace('${chapter_title}', chapter_title) \
-                .replace('${chapter_content}', chapter_content)
-            for _img in re.findall(r'<img src="http.*?>', _data):
-                _img = _img.replace('>', ' />')
-                _src = str_mid(_img, '<img src="', '"')
-                if _src.rfind('/') == -1:
-                    continue
-                _filename = _src[_src.rfind('/') + 1:]
-                _data = _data.replace(_src, '../Images/' + _filename)
-            _file.write(_data)
-
-    def fiximagechapter(self, chapter_id: str, chapter_title: str, image: bytes):
-        self.fixchapter(chapter_id, chapter_title,
-                        '<img src="../Images/' + chapter_id + '.png" alt=\'' + chapter_title + '\' />')
-        with open(self._tempdir + '/OEBPS/Images/' + chapter_id + '.png', 'wb') as _file:
-            _file.write(image)
-        self._add_manifest_image(chapter_id + '.png')
+    def set_cover(self, url: str):
+        image_path = self.tempdir + '/OEBPS/Images/' + url[url.rfind('/') + 1:]
+        if os.path.exists(image_path):
+            if os.path.getsize(image_path) != 0:
+                return
+        for retry in range(set_max_image_retry):
+            try:
+                urllib.request.urlretrieve(url, image_path)
+                shutil.copyfile(image_path, self.tempdir + '/OEBPS/Images/cover.jpg')
+                return
+            except OSError as e:
+                if retry != set_max_image_retry - 1:
+                    print("下載封面圖片失敗，重試: " + str(e) + '\n' + url)
+                    time.sleep(0.5 * retry)
+                else:
+                    print("下載封面圖片失敗，放棄: " + str(e) + '\n' + url)
+                    with open(image_path, 'wb'):
+                        pass
 
     def export(self):
         self._save()
         with zipfile.ZipFile(self._filepath, 'w', zipfile.ZIP_DEFLATED) as _file:
-            _result = getallfiles(self._tempdir)
+            _result = get_all_files(self.tempdir)
             for _name in _result:
-                _file.write(_name, _name.replace(self._tempdir + '/', ''))
+                _file.write(_name, _name.replace(self.tempdir + '/', ''))
 
-    def export_txt(self):
-        self._save()
-        with codecs.open(self._filepath.replace('.epub', '.txt'), 'w', 'utf-8') as _file:
-            for _name in sorted(os.listdir(self._tempdir + '/OEBPS/Text')):
-                if _name.find('$') > -1 or _name == 'cover.xhtml':
+    def add_image_mt(self, filename: str, url: str):
+        image_path = self.tempdir + '/OEBPS/Images/' + filename
+        if os.path.exists(image_path):
+            if os.path.getsize(image_path) != 0:
+                return
+        for retry in range(set_max_image_retry):
+            try:
+                urllib.request.urlretrieve(url, image_path)
+                return
+            except OSError as e:
+                if retry != set_max_image_retry - 1:
+                    print("下載圖片失敗，重試: " + str(e) + '\n' + url)
+                    time.sleep(0.5 * retry)
+                else:
+                    print("下載圖片時出現錯誤，放棄: " + str(e) + '\n' + url)
+                    with open(image_path, 'wb'):
+                        pass
+
+    def add_chapter_mt(self, chapter_id: str, division_name: str, chapter_title: str, chapter_content: str,
+                       division_index, chapter_order):
+        f_name = division_index.rjust(4, "0") + '-' + str(chapter_order).rjust(6, "0") + '-' + chapter_id
+        _data = self._chapter_format.replace(
+            '<title>${chapter_title}</title>', '<title>' + text_to_html_element_escape(division_name) + ' : ' +
+                                               text_to_html_element_escape(chapter_title) + '</title>') \
+            .replace('${chapter_content}', '<h3>' + text_to_html_element_escape(chapter_title) + '</h3>\r\n' +
+                     chapter_content)
+        for _img in re.findall(r'<img src="http.*?>', _data):
+            _img = _img.replace('>', ' />')
+            _src = str_mid(_img, '<img src="', '"')
+            if _src.rfind('/') == -1:
+                continue
+            filename = _src[_src.rfind('/') + 1:]
+            self.add_image_mt(filename, _src)
+            _data = _data.replace(_src, '../Images/' + filename)
+            _data = re.sub(
+                f"(<img src=[\"\']\\.\\./Images/{filename}[\"\'] *alt=[\"\'][^\"^\']+[\"\'] *)(?!( ))(?!(/>))[/>]?",
+                "\\1/>", _data)
+        with codecs.open(self.tempdir + '/OEBPS/Text/' + f_name + '.xhtml', 'w', 'utf-8') as _file:
+            _file.write(_data)
+
+    def download_book_mt_write_chapter(self, division_chapter_list):
+        order_count = 2
+        with codecs.open(os.path.splitext(self._filepath)[0] + ".txt", 'w', 'utf-8') as _file:
+            with codecs.open(self.tempdir + '/OEBPS/Text/cover.xhtml', 'r', 'utf-8') as _cover_xhtml:
+                cover = str(_cover_xhtml.read())
+                cover = str_mid(cover, '<h1>', '</body>')
+                cover = cover.replace('</h1>', '').replace('<h2>', '').replace('</h2>', '').replace('<h3>', ''). \
+                    replace('</h3>', '').replace('<p>', '').replace('</p>', '')
+                cover = html_element_to_text_unescape(cover)
+                _file.write(cover + '\r\n')
+
+            for filename in sorted(os.listdir(self.tempdir + '/OEBPS/Text/')):
+                if filename.find('$') > -1 or filename == 'cover.xhtml':
                     continue
-                with codecs.open(self._tempdir + '/OEBPS/Text/' + _name, 'r', 'utf-8') as _file_xhtml:
-                    _data_chapter = re.sub(r'<h3>.*?</h3>', '', str(_file_xhtml.read()))
+                f_name = os.path.splitext(filename)[0]
+                self._add_manifest_chapter(f_name)
+                self._add_spine(f_name)
+                with codecs.open(self.tempdir + '/OEBPS/Text/' + filename, 'r', 'utf-8') as _file_xhtml:
+                    _data_chapter = re.sub(r'<h3>.*?</h3>', '', _file_xhtml.read())
+
+                division_and_chapter_file = str_mid(_data_chapter, "<title>", "</title>")
+
+                if division_and_chapter_file == '':
+                    division_name = ''
+                    chapter_title = ''
+                    for division_list_name in division_chapter_list:
+                        for chapter in division_chapter_list[division_list_name]:
+                            if chapter['chapter_id'] == os.path.splitext(filename)[0].split("-")[2]:
+                                division_name = division_list_name
+                                chapter_title = chapter['chapter_title']
+                                break
+                        else:
+                            continue
+                        break
+                    if division_name == '' and chapter_title == '':
+                        division_and_chapter_file = text_to_html_element_escape(filename)
+                    else:
+                        division_and_chapter_file = text_to_html_element_escape(division_name + ' : ' + chapter_title)
+
+                self.add_nav_map(str(order_count), f_name, division_and_chapter_file)
                 for _a in re.findall(r'<a href=.*?>章节链接</a>', _data_chapter):
                     _data_chapter = _data_chapter.replace(_a, '章节链接:' + str_mid(_a, '<a href="', '"'))
                 for _img in re.findall(r'<img src=.*?>', _data_chapter):
-                    _data_chapter = _data_chapter.replace(_img, '图片:"' + str_mid(_img, "alt='", "'") + '",' +
-                                                          '位置:"' + str_mid(_img, '<img src="', '"')
-                                                          .replace('../', '') + '"')
+                    _data_chapter = _data_chapter.replace(_img, '图片:"' + str_mid(_img, "alt='", "'") + '",' + '位置:"'
+                                                          + str_mid(_img, '<img src="', '"').replace('../', '') + '"')
                 _data_chapter = re.sub(r'</?[\S\s]*?>', '', _data_chapter)
-                _data_chapter = re.sub(r'[\r\n]+', nl * 2, _data_chapter)
-                _file.write(_data_chapter + nl)
+                _data_chapter = re.sub(r'[\r\n]+', '\r\n\r\n', _data_chapter)
+                _data_chapter = html_element_to_text_unescape(_data_chapter)
+                _file.write(_data_chapter)
+                order_count += 1
+            for filename in sorted(os.listdir(self.tempdir + '/OEBPS/Images/')):
+                self._add_manifest_image(filename)
+        self.export()
+
+        self.make_backup()
+
+    def make_backup(self):
+        date = str(datetime.datetime.now().date())
+        copy_add_suffix_if_exists_add_index(self._filepath, date)
+        copy_add_suffix_if_exists_add_index(os.path.splitext(self._filepath)[0] + '.txt', date)
+
+    def make_cover_text(self, book_name: str, author_name: str, book_description: str, update_time: str):
+        text = '<h1>' + text_to_html_element_escape(book_name) + '</h1>\r\n<h2>作者: ' + \
+               text_to_html_element_escape(author_name) + '</h2>\r\n<h3>更新時間: ' + update_time + \
+            '</h3>\r\n<h3>簡介:</h3>\r\n<p>' + \
+            re.sub('\r\n', '</p>\r\n<p>', text_to_html_element_escape(book_description) + '</p>')
+        text = re.sub('</body>\r\n</html>', text + '\r\n</body>\r\n</html>', self.cover_template)
+        with codecs.open(self.tempdir + '/OEBPS/Text/cover.xhtml', 'w', 'utf-8') as _file:
+            _file.write(text)
