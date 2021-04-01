@@ -1,10 +1,10 @@
-from instance import *
 from bookshelf import *
+from instance import *
+import HbookerAPI
+import datetime
+import msg
 import sys
 import re
-import datetime
-import HbookerAPI
-import msg
 
 
 def refresh_bookshelf_list():
@@ -31,7 +31,6 @@ def shell_login(inputs):
     else:
         print(msg.m('input_correct_var'))
         return False
-
     response = HbookerAPI.SignUp.login(Vars.cfg.data['user_account'], Vars.cfg.data['user_password'])
     if response.get('code') == '100000':
         Vars.cfg.data['reader_name'] = response['data']['reader_info']['reader_name']
@@ -63,7 +62,7 @@ def shell_bookshelf(inputs):
         refresh_bookshelf_list()
 
 
-def shell_books(inputs):
+def shell_select_books(inputs):
     if len(inputs) >= 2:
         Vars.current_book = None
         if Vars.current_bookshelf is not None:
@@ -101,17 +100,17 @@ def shell_books(inputs):
             Vars.current_bookshelf.show_book_list()
 
 
-def shell_mtd(inputs):
+def shell_download_book(inputs):
     if len(inputs) > 1:
-        shell_books(inputs)
+        shell_select_books(inputs)
     if Vars.current_book is None:
         print(msg.m('not_picked_book'))
         return
     print(msg.m('start_book_dl'))
-    Vars.current_book.download_book_multithreading()
+    Vars.current_book.download_book_multi_thread()
 
 
-def shell_mtd_list(inputs):
+def shell_download_list(inputs):
     if len(inputs) >= 2:
         list_file = inputs[1]
     else:
@@ -123,10 +122,10 @@ def shell_mtd_list(inputs):
         return
     list_lines = list_file_input.readlines()
     for line in list_lines:
-        if re.match("^\\s*([0-9]+).*$", line):
+        if re.match("^\\s*([0-9]{9}).*$", line):
             book_id = re.sub("^\\s*([0-9]{9}).*$\\n?", "\\1", line)
             print("Book ID: " + book_id + " ", end='')
-            shell_mtd(['', book_id, ''])
+            shell_download_book(['', book_id, ''])
 
 
 def shell_download_shelf(inputs):
@@ -134,13 +133,12 @@ def shell_download_shelf(inputs):
         shell_bookshelf(inputs)
     if Vars.current_bookshelf is not None:
         for book in Vars.current_bookshelf.BookList:
-            shell_mtd(['', book.book_id])
+            shell_download_book(['', book.book_id])
     else:
         print(msg.m('not_picked_shelf'))
 
 
 def check_in_today():
-
     if Vars.cfg.data.get('user_account') is None or Vars.cfg.data.get('user_account') == "" \
             or Vars.cfg.data.get('user_password') is None or Vars.cfg.data.get('user_password') == "":
         print(msg.m('not_login_pl_login'))
@@ -230,7 +228,6 @@ def shell_switch_message_charter_set():
 def shell():
     if Vars.cfg.data.get('user_code') is not None:
         HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
-
         if len(sys.argv) > 1:
             if str(sys.argv[1]).startswith('t'):
                 if check_in_today():
@@ -259,14 +256,12 @@ def shell():
             save = True
         if save:
             Vars.cfg.save()
-
         print(msg.m('help_msg'))
         print(msg.m('not_login_pl_login'))
         if len(sys.argv) > 1:
             inputs = sys.argv[1:]
         else:
             inputs = re.split('\\s+', get('>').strip())
-
     while True:
         if inputs[0].startswith('q'):
             sys.exit()
@@ -276,21 +271,19 @@ def shell():
         elif inputs[0].startswith('s'):
             shell_bookshelf(inputs)
         elif inputs[0].startswith('b'):
-            shell_books(inputs)
+            shell_select_books(inputs)
         elif inputs[0].startswith('ds') or inputs[0].startswith('downloads'):
             shell_download_shelf(inputs)
         elif inputs[0].startswith('d'):
-            shell_mtd(inputs)
+            shell_download_book(inputs)
         elif inputs[0].startswith('u'):
-            shell_mtd_list(inputs)
+            shell_download_list(inputs)
         elif inputs[0].startswith('t'):
             check_in_today()
         elif inputs[0].startswith('m'):
             shell_switch_message_charter_set()
-
         else:
             print(msg.m('help_msg'))
-
         if loop is False:
             break
         inputs = re.split('\\s+', get('>').strip())
@@ -298,21 +291,17 @@ def shell():
 
 if __name__ == "__main__":
     Vars.cfg.load()
-
     if type(Vars.cfg.data.get('interface_traditional_chinese')) is not bool:
         Vars.cfg.data['interface_traditional_chinese'] = False
         Vars.cfg.save()
         msg.set_message_lang()
     else:
         msg.set_message_lang(Vars.cfg.data['interface_traditional_chinese'])
-
     agreed_read_readme()
-
     if type(Vars.cfg.data.get('max_concurrent_downloads')) is not int:
         Vars.cfg.data['max_concurrent_downloads'] = 32
         Vars.cfg.save()
         max_concurrent_downloads = 32
     else:
         max_concurrent_downloads = Vars.cfg.data.get('max_concurrent_downloads')
-
     shell()

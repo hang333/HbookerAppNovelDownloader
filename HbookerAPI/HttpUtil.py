@@ -3,7 +3,7 @@ import time
 import sys
 
 headers = {'User-Agent': 'Android'}
-maxRetry = 20
+maxRetry = 10
 
 
 def get(url, params=None, retry=maxRetry, **kwargs):

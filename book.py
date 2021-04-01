@@ -1,10 +1,10 @@
-import HbookerAPI
-from config import *
+# from config import *
 from Epub import *
-import os
+import HbookerAPI
 import threading
 import queue
 import msg
+import os
 
 
 class Book:
@@ -33,17 +33,13 @@ class Book:
         self.division_list = []
         self.chapter_list = []
         self.division_chapter_list = {}
-
         self.get_chapter_catalog_mt_dl_lock = threading.Lock()
         self.concurrent_download_queue = queue.Queue()
         for item in range(max_concurrent_downloads):
             self.concurrent_download_queue.put(item)
-
         self.process_finished_count = 0
         self.downloaded_count = 0
-
-        self.config = Config(os.getcwd() + '/Cache/book-' + self.fix_illegal_book_name() + '.json', os.getcwd() +
-                             '/Cache/')
+        # self.config = Config('./Cache/book-' + self.fix_illegal_book_name() + '.json', './Cache/')
         # self.config.load()
 
     def get_division_list(self):
@@ -74,16 +70,8 @@ class Book:
     def get_chapter_catalog(self):
         print('正在獲取書籍目錄...')
         self.chapter_list.clear()
-        # total = len(self.division_list)
-        # count = 1
         download_threads = []
         for division in self.division_list:
-            # print("\r" + str(count) + " / " + str(total) + "...", end="")
-            # count += 1
-            # response = HbookerAPI.Book.get_chapter_update(division['division_id'])
-            # if response.get('code') == '100000':
-            #     self.chapter_list.extend(response['data']['chapter_list'])
-            #     self.division_chapter_list[division['division_name']] = response['data']['chapter_list']
             get_thread = threading.Thread(target=self.get_chapter_catalog_get_thread, args=(division,))
             download_threads.append(get_thread)
             get_thread.start()
@@ -110,13 +98,12 @@ class Book:
                       '：' + chapter_info['chapter_title'])
                 chapter_order += 1
 
-    def download_book_multithreading(self, ):
+    def download_book_multi_thread(self, ):
         self.file_path = './Hbooker/' + self.fix_illegal_book_name() + '/' + self.fix_illegal_book_name() + '.epub '
         self.epub = EpubFile(self.file_path, './Cache/' + self.fix_illegal_book_name(), self.book_id,
                              self.book_name,
                              self.author_name, read_old_epub=False)
         self.epub.set_cover(self.cover)
-
         threads = []
         # for every chapter in order of division
         for division in self.division_list:
@@ -172,7 +159,7 @@ class Book:
                         chapter_info['chapter_title'] + "\n" + str(self.downloaded_count) + ' / ' +
                         str(self.process_finished_count) + " / " + str(len(self.chapter_list)), end=' ')
                 else:
-                    download_thread = threading.Thread(target=self.download_book_mt_get_chapter,
+                    download_thread = threading.Thread(target=self.download_book_get_chapter,
                                                        args=(chapter_info['chapter_index'], chapter_info['chapter_id'],
                                                              division['division_index'], chapter_order,))
                     threads.append(download_thread)
@@ -200,7 +187,7 @@ class Book:
                     os.makedirs("Hbooker/" + self.fix_illegal_book_name())
                 self.epub.make_cover_text(self.book_info['book_name'], self.book_info['author_name'],
                                           self.book_info['description'], self.book_info['uptime'])
-                self.epub.download_book_mt_write_chapter(self.division_chapter_list)
+                self.epub.download_book_write_chapter(self.division_chapter_list)
                 # self.config.data['book_info'] = self.book_info
                 # self.config.data['division_chapter_list'] = self.division_chapter_list
                 # self.config.save()
@@ -215,7 +202,7 @@ class Book:
                 os.makedirs("Hbooker/" + self.fix_illegal_book_name())
             self.epub.make_cover_text(self.book_info['book_name'], self.book_info['author_name'],
                                       self.book_info['description'], self.book_info['uptime'])
-            self.epub.download_book_mt_write_chapter(self.division_chapter_list)
+            self.epub.download_book_write_chapter(self.division_chapter_list)
             # self.config.data['book_info'] = self.book_info
             # self.config.data['division_chapter_list'] = self.division_chapter_list
             # self.config.save()
@@ -223,7 +210,7 @@ class Book:
         self.process_finished_count = 0
         self.downloaded_count = 0
 
-    def download_book_mt_get_chapter(self, chapter_index, chapter_id, division_index, chapter_order):
+    def download_book_get_chapter(self, chapter_index, chapter_id, division_index, chapter_order):
         division_name = None
         for division in self.division_list:
             if division['division_index'] == division_index:
@@ -268,8 +255,8 @@ class Book:
                     # 下載成功
                     author_say = response2['data']['chapter_info']['author_say'].replace('\r', '')
                     author_say = author_say.replace('\n', '</p>\r\n<p>')
-                    self.epub.add_chapter_mt(chapter_id, division_name,
-                                             response2['data']['chapter_info']['chapter_title'], '<p>' + content +
+                    self.epub.add_chapter(chapter_id, division_name,
+                                          response2['data']['chapter_info']['chapter_title'], '<p>' + content +
                                              '</p>\r\n<p>' + author_say + '</p>', division_index, chapter_order)
                     self.add_process_finished_count()
                     self.downloaded_count += 1
