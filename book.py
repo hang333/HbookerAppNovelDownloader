@@ -81,8 +81,8 @@ class Book:
         print("\r", end="")
 
     def show_latest_chapter_(self):
-        print(msg.m('show_last_chap_s_index'), self.chapter_list[-1]['chapter_index'], msg.m('show_last_chap_uptime'), self.last_chapter_info['uptime'],
-              msg.m('show_last_chap_name'), self.chapter_list[-1]['chapter_title'])
+        print(msg.m('show_last_chap_s_index'), self.chapter_list[-1]['chapter_index'], msg.m('show_last_chap_uptime'),
+              self.last_chapter_info['uptime'], msg.m('show_last_chap_name'), self.chapter_list[-1]['chapter_title'])
 
     def fix_illegal_book_name(self):
         return self.book_name.replace('<', '＜').replace('>', '＞').replace(':', '：').replace('"', '“') \
@@ -257,7 +257,7 @@ class Book:
                     author_say = author_say.replace('\n', '</p>\r\n<p>')
                     self.epub.add_chapter(chapter_id, division_name,
                                           response2['data']['chapter_info']['chapter_title'], '<p>' + content +
-                                             '</p>\r\n<p>' + author_say + '</p>', division_index, chapter_order)
+                                          '</p>\r\n<p>' + author_say + '</p>', division_index, chapter_order)
                     self.add_process_finished_count()
                     self.downloaded_count += 1
                     print('\r' + str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
