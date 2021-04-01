@@ -179,8 +179,8 @@ class EpubFile:
                 return
             except OSError as e:
                 if retry != set_max_image_retry - 1:
-                    print(msg.m('cover_dl_rt') + str(retry + 1) + ' / ' + str(set_max_image_retry) + ' ' + str(e) + '\n'
-                          + url)
+                    print(msg.m('cover_dl_rt') + str(retry + 1) + ' / ' + str(set_max_image_retry) + ', ' + str(e) +
+                          '\n' + url)
                     time.sleep(0.5 * retry)
                 else:
                     print(msg.m('cover_dl_f') + str(e) + '\n' + url)
@@ -205,7 +205,7 @@ class EpubFile:
                 return
             except OSError as e:
                 if retry != set_max_image_retry - 1:
-                    print(msg.m('image_dl_rt') + str(e) + str(retry + 1) + ' / ' + str(set_max_image_retry) + ' ' + '\n'
+                    print(msg.m('image_dl_rt') + str(retry + 1) + ' / ' + str(set_max_image_retry) + ', ' + str(e) + '\n'
                           + url)
                     time.sleep(0.5 * retry)
                 else:

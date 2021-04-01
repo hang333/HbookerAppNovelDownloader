@@ -1,7 +1,7 @@
 lang = {}
 TC = {
     # msg
-    'lang': "切換為繁體中文",
+    'lang': "提示訊息切換為繁體中文",
     # run
     'read_readme': "!!使用前請仔細閱讀README.md!!  !!使用前請仔細閱讀README.md!!\n\n!!使用前請仔細閱讀README.md!!  "
                    "!使用前請仔細閱讀README.md!!\n\n!!使用前請仔細閱讀README.md!!  !!使用前請仔細閱讀README.md!!\n\n",
@@ -88,7 +88,7 @@ u <path.txt> | update <path.txt>\t\t\t--- 下載指定書單中所列書籍
 # 下載指定檔案"list_path.txt"中的所有書籍
 SC = {
     # msg
-    'lang': "切换为简体中文",
+    'lang': "提示讯息切换为简体中文",
     # run
     'read_readme': "!!使用前请仔细阅读README.md!!  !!使用前请仔细阅读README.md!!\n\n!!使用前请仔细阅读README.md!!  "
                    "!使用前请仔细阅读README.md!!\n\n!!使用前请仔细阅读README.md!!  !!使用前请仔细阅读README.md!!\n\n",
