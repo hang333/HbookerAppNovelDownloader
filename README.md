@@ -113,6 +113,7 @@
   * 例: 只簽到  
   `py run.py t`  
     注: 簽到成功後會立刻結束，不會嘗試獲取刷新書架。
+   * 若想要完全自動化，可使用Windows的工作排程器`task scheduler`或Unix的`cron job`等類似工具，設定`定時執行`執行。  
 ## 與原版差異/改動
 * \+ **簽到功能(領代幣)，(自動簽到)**。
 * \+ **下載章節與獲取書籍目錄時使用多工，加快下載速度(取代原download)**，  
@@ -172,8 +173,7 @@
   * 若未購買章節，則會進行告知，不會建立空檔檔案。  
   * 若下載中途出現問題，導致停止運行，請閱讀錯誤原因，大部分錯誤重新執行下載幾可排除。  
     注: 少數狀況下可能導致章節不全(機率極小)，需要手動刪除該章，重新下載。  
-  * 若有需要EPUB黨可被解壓縮還原成暫存檔。  
-  * 若想要自動化，可使用Windows的工作排程器(`task scheduler`)或Unix的`cron job`做定時執行簽到下載。
+  * 若有需要EPUB黨可被解壓縮還原成暫存檔。
   * 在Windows上可建立捷徑，添加參數，點擊可執行特定功能。  
   * 可使用`pyinstaller`打包凍結封包程執行檔方便使用 :  
     `pyinstaller --noconfirm --onefile --console --add-data "template.epub;." "run.py" --name "HbookerAppNovelDownloader"`
