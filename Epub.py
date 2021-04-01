@@ -7,6 +7,7 @@ from os import path
 import time
 import datetime
 import shutil
+import  msg
 
 set_max_image_retry = 10
 
@@ -51,7 +52,8 @@ def copy_add_suffix_if_exists_add_index(file_path: str, suffix: str):
         else:
             shutil.copyfile(file_path, file_base + file_ext)
     else:
-        print("file dose not exists: " + file_path)
+        # 出現錯誤
+        print("error: file dose not exists: " + file_path)
 
 
 class EpubFile:
@@ -182,10 +184,10 @@ class EpubFile:
                 return
             except OSError as e:
                 if retry != set_max_image_retry - 1:
-                    print("下載封面圖片失敗，重試: " + str(e) + '\n' + url)
+                    print(msg.m('cover_dl_rt') + str(e) + '\n' + url)
                     time.sleep(0.5 * retry)
                 else:
-                    print("下載封面圖片失敗，放棄: " + str(e) + '\n' + url)
+                    print(msg.m('cover_dl_f') + str(e) + '\n' + url)
                     with open(image_path, 'wb'):
                         pass
 
@@ -207,10 +209,10 @@ class EpubFile:
                 return
             except OSError as e:
                 if retry != set_max_image_retry - 1:
-                    print("下載圖片失敗，重試: " + str(e) + '\n' + url)
+                    print(msg.m('image_dl_rt') + str(e) + '\n' + url)
                     time.sleep(0.5 * retry)
                 else:
-                    print("下載圖片時出現錯誤，放棄: " + str(e) + '\n' + url)
+                    print(msg.m('image_dl_f') + str(e) + '\n' + url)
                     with open(image_path, 'wb'):
                         pass
 

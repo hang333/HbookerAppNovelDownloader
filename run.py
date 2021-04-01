@@ -4,6 +4,7 @@ import sys
 import re
 import datetime
 import HbookerAPI
+import msg
 
 
 def refresh_bookshelf_list():
@@ -13,7 +14,7 @@ def refresh_bookshelf_list():
         for shelf in response['data']['shelf_list']:
             BookShelfList.append(BookShelf(shelf))
     else:
-        print("Error: " + str(response))
+        print(msg.m('error_response') + str(response))
     for shelf in BookShelfList:
         shelf.show_info()
     if len(BookShelfList) == 1:
@@ -28,7 +29,7 @@ def shell_login(inputs):
         Vars.cfg.data['user_account'] = inputs[1]
         Vars.cfg.data['user_password'] = inputs[2]
     else:
-        print('請輸入正確的參數')
+        print(msg.m('input_correct_var'))
         return False
 
     response = HbookerAPI.SignUp.login(Vars.cfg.data['user_account'], Vars.cfg.data['user_password'])
@@ -39,7 +40,7 @@ def shell_login(inputs):
                                           'account': response['data']['reader_info']['account']}
         Vars.cfg.save()
         HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
-        print('登錄成功, 用戶暱稱為: ', Vars.cfg.data['reader_name'])
+        print(msg.m('login_success_user') + Vars.cfg.data['reader_name'])
         return True
     else:
         # print("response logon: " + str(response))
@@ -53,9 +54,9 @@ def shell_bookshelf(inputs):
             refresh_bookshelf_list()
         Vars.current_bookshelf = get_bookshelf_by_index(inputs[1])
         if Vars.current_bookshelf is None:
-            print('請輸入正確的參數')
+            print(msg.m('input_correct_var'))
         else:
-            print('選擇書架: "' + Vars.current_bookshelf.shelf_name + '"')
+            print(msg.m('picked_shelf_s') + Vars.current_bookshelf.shelf_name + msg.m('picked_shelf_e'))
             Vars.current_bookshelf.get_book_list()
             Vars.current_bookshelf.show_book_list()
     else:
@@ -73,7 +74,7 @@ def shell_books(inputs):
                     Vars.current_book = Book(None, response['data']['book_info'],
                                              max_concurrent_downloads=max_concurrent_downloads)
                 else:
-                    print('獲取書籍信息失敗, shelf_index:', inputs[1])
+                    print(msg.m('failed_get_book_info_index'), inputs[1])
                     return
         if Vars.current_book is None:
             response = HbookerAPI.Book.get_info_by_id(inputs[1])
@@ -81,7 +82,7 @@ def shell_books(inputs):
                 # print(response['data']['book_info'])
                 Vars.current_book = Book(None, response['data']['book_info'])
             else:
-                print('獲取書籍信息失敗, book_id:', inputs[1])
+                print(msg.m('failed_get_book_info_id'), inputs[1])
                 return
 
         print('《' + Vars.current_book.book_name + '》')
@@ -94,7 +95,7 @@ def shell_books(inputs):
         if Vars.current_book is not None:
             Vars.current_book.show_chapter_list_order_division()
         elif Vars.current_bookshelf is None:
-            print('未選擇書架')
+            print(msg.m('not_picked_shelf'))
         else:
             Vars.current_bookshelf.get_book_list()
             Vars.current_bookshelf.show_book_list()
@@ -104,9 +105,9 @@ def shell_mtd(inputs):
     if len(inputs) > 1:
         shell_books(inputs)
     if Vars.current_book is None:
-        print('未選擇書籍')
+        print(msg.m('not_picked_book'))
         return
-    print('開始下載書籍...\n')
+    print(msg.m('start_book_dl'))
     Vars.current_book.download_book_multithreading()
 
 
@@ -135,83 +136,77 @@ def shell_download_shelf(inputs):
         for book in Vars.current_bookshelf.BookList:
             shell_mtd(['', book.book_id])
     else:
-        print('未選擇書架')
+        print(msg.m('not_picked_shelf'))
 
 
 def check_in_today():
 
     if Vars.cfg.data.get('user_account') is None or Vars.cfg.data.get('user_account') == "" \
             or Vars.cfg.data.get('user_password') is None or Vars.cfg.data.get('user_password') == "":
-        print("未登入，請先登入")
+        print(msg.m('not_login_pl_login'))
         return False
 
     today = str((datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(hours=8)).date())
     check_in_records = HbookerAPI.CheckIn.get_check_in_records()
     if check_in_records.get('code') == '100000':
-        for record in check_in_records['data']['sign_record_list']:
-            if record['date'] == today:
-                if record['is_signed'] == '0':
-                    check_in = HbookerAPI.CheckIn.do_check_in()
-                    if check_in.get('code') == '100000':
-                        print('簽到成功, 獲得: ' + str(check_in['data']['bonus']['exp']) + ' 經驗, ' +
-                              str(check_in['data']['bonus']['hlb']) + ' 代幣, ' +
-                              str(check_in['data']['bonus']['recommend']) + ' 推薦票\n')
-                        return True
-                    elif check_in.get('code') == '340001':
-                        print("任務已完成，請勿重複簽到\n")
-                        return True
-                    else:
-                        print("簽到失敗:\n" + str(check_in) + '\n')
-                        return False
-                else:
-                    print("已簽到\n")
-                    return True
+        if check_in_today_do(check_in_records, today):
+            return True
+        else:
+            return False
     elif check_in_records.get('code') == '200001':
         # {'code': '200001', 'tip': '缺少登录必需参数'}
-        print("未登入，請先登入\n")
+        print(msg.m('not_login_pl_login'))
         return False
     elif check_in_records.get('code') == '200100':
         # {'code': '200100', 'tip': '登录状态过期，请重新登录'}
-        print("登入過期或失效，自動嘗試重新登入")
+        print(msg.m('check_in_token_failed'))
         if shell_login(['']):
-            print("成功重新登入，再次執行簽到")
+            print(msg.m('check_in_re_login_retry_check_in'))
             check_in_records = HbookerAPI.CheckIn.get_check_in_records()
             if check_in_records.get('code') == '100000':
-                for record in check_in_records['data']['sign_record_list']:
-                    if record['date'] == today:
-                        if record['is_signed'] == '0':
-                            check_in = HbookerAPI.CheckIn.do_check_in()
-                            if check_in.get('code') == '100000':
-                                print('簽到成功, 獲得: ' + str(check_in['data']['bonus']['exp']) + ' 經驗, ' +
-                                      str(check_in['data']['bonus']['hlb']) + ' 代幣, ' +
-                                      str(check_in['data']['bonus']['recommend']) + ' 推薦票\n')
-                                return True
-                            elif check_in.get('code') == '340001':
-                                print("任務已完成，請勿重複簽到\n")
-                                return True
-                            else:
-                                print("簽到失敗:\n" + str(check_in) + '\n')
-                                return False
-                        else:
-                            print("已簽到\n")
-                            return True
+                if check_in_today_do(check_in_records, today):
+                    return True
+                else:
+                    return False
             else:
-                print("簽到失敗，特殊原因，請手動處理:\n" + str(check_in_records) + '\n')
+                print(msg.m('check_in_error_1') + str(check_in_records) + '\n')
                 return False
         else:
-            print("重新登入失敗，請手動處理\n")
+            print(msg.m('check_in_re_login_failed'))
             return False
     else:
-        print("簽到失敗，特殊原因，請手動處理:\n" + str(check_in_records) + '\n')
+        print(msg.m('check_in_error_2') + str(check_in_records) + '\n')
         return False
 
 
+def check_in_today_do(check_in_records, today):
+    for record in check_in_records['data']['sign_record_list']:
+        if record['date'] == today:
+            if record['is_signed'] == '0':
+                check_in = HbookerAPI.CheckIn.do_check_in()
+                if check_in.get('code') == '100000':
+                    print(msg.m('check_in_success_got') + str(check_in['data']['bonus']['exp']) + msg.m('check_in_xp') +
+                          str(check_in['data']['bonus']['hlb']) + msg.m('check_in_token') +
+                          str(check_in['data']['bonus']['recommend']) + msg.m('check_in_recommend'))
+                    return True
+                elif check_in.get('code') == '340001':
+                    print(msg.m('check_in_no_redo'))
+                    return True
+                else:
+                    print(msg.m('check_in_failed') + str(check_in) + '\n')
+                    return False
+            else:
+                print(msg.m('check_in_already'))
+                return True
+    # 日期異常，未找本日對應簽到記錄，不進行簽到嘗試
+    print(msg.m('check_in_error_day_not_found') + str(check_in_records))
+    return False
+
+
 def agreed_read_readme():
-    if Vars.cfg.data.get('agreed_to_readme') is None:
-        print(
-            "!!使用前請仔細閱讀README.md!!  !!使用前請仔細閱讀README.md!!\n\n!!使用前請仔細閱讀README.md!!  "
-            "!使用前請仔細閱讀README.md!!\n\n!!使用前請仔細閱讀README.md!!  !!使用前請仔細閱讀README.md!!\n\n")
-        print("是否以仔細閱讀且同意README.md中敘述事物\n如果兩者回答皆為\"是\"，請輸入英文 \"yes\" 後按Enter建，如果不同意請關閉此程式\n")
+    if Vars.cfg.data.get('agreed_to_readme') != 'yes':
+        print(msg.m('read_readme'))
+        print(msg.m('agree_terms'))
 
         confirm = get('>').strip()
         if confirm == 'yes':
@@ -219,6 +214,17 @@ def agreed_read_readme():
             Vars.cfg.save()
         else:
             sys.exit()
+
+
+def shell_switch_message_charter_set():
+    if Vars.cfg.data['interface_traditional_chinese']:
+        Vars.cfg.data['interface_traditional_chinese'] = False
+        pass
+    else:
+        Vars.cfg.data['interface_traditional_chinese'] = True
+    Vars.cfg.save()
+    msg.set_message_lang(Vars.cfg.data['interface_traditional_chinese'])
+    print(msg.m('lang'))
 
 
 def shell():
@@ -239,7 +245,7 @@ def shell():
         else:
             check_in_today()
             loop = True
-            print(Vars.help_info)
+            print(msg.m('help_msg'))
             refresh_bookshelf_list()
             inputs = re.split('\\s+', get('>').strip())
     else:
@@ -254,8 +260,8 @@ def shell():
         if save:
             Vars.cfg.save()
 
-        print(Vars.help_info)
-        print("未登入，請先登入")
+        print(msg.m('help_msg'))
+        print(msg.m('not_login_pl_login'))
         if len(sys.argv) > 1:
             inputs = sys.argv[1:]
         else:
@@ -279,8 +285,11 @@ def shell():
             shell_mtd_list(inputs)
         elif inputs[0].startswith('t'):
             check_in_today()
+        elif inputs[0].startswith('m'):
+            shell_switch_message_charter_set()
+
         else:
-            print(Vars.help_info)
+            print(msg.m('help_msg'))
 
         if loop is False:
             break
@@ -289,6 +298,13 @@ def shell():
 
 if __name__ == "__main__":
     Vars.cfg.load()
+
+    if type(Vars.cfg.data.get('interface_traditional_chinese')) is not bool:
+        Vars.cfg.data['interface_traditional_chinese'] = False
+        Vars.cfg.save()
+        msg.set_message_lang()
+    else:
+        msg.set_message_lang(Vars.cfg.data['interface_traditional_chinese'])
 
     agreed_read_readme()
 

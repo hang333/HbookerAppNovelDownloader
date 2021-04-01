@@ -4,6 +4,7 @@ from Epub import *
 import os
 import threading
 import queue
+import msg
 
 
 class Book:
@@ -46,20 +47,19 @@ class Book:
         # self.config.load()
 
     def get_division_list(self):
-        # print('[提示]', '正在获取书籍分卷...')
-        print('正在獲取書籍分卷...', end='')
+        print(msg.m('get_div'), end='')
         response = HbookerAPI.Book.get_division_list(self.book_id)
         if response.get('code') == '100000':
             self.division_list = response['data']['division_list']
         else:
-            print("分捲獲取失敗: " + str(response))
+            print(msg.m('failed_get_div') + str(response))
 
     def show_division_list(self):
         print('\r', end='')
         for division in self.division_list:
-            print('分卷編號:' + division['division_index'].rjust(3, " ") + ' 共:' +
+            print(msg.m('show_div_index') + division['division_index'].rjust(3, " ") + msg.m('show_div_total') +
                   str(len(self.division_chapter_list[division['division_name']])).rjust(4, " ") +
-                  ' 章 分卷名: ' + division['division_name'])
+                  msg.m('show_div_name') + division['division_name'])
 
     def get_chapter_catalog_get_thread(self, division):
         response = HbookerAPI.Book.get_chapter_update(division['division_id'])
@@ -69,7 +69,7 @@ class Book:
             self.division_chapter_list[division['division_name']] = response['data']['chapter_list']
             self.get_chapter_catalog_mt_dl_lock.release()
         else:
-            print("章節獲取失敗: " + division['division_name'] + ": " + str(response))
+            print(msg.m('failed_get_chap') + division['division_name'] + ": " + str(response))
 
     def get_chapter_catalog(self):
         print('正在獲取書籍目錄...')
@@ -93,8 +93,8 @@ class Book:
         print("\r", end="")
 
     def show_latest_chapter_(self):
-        print('  最新章節, 編號: ', self.chapter_list[-1]['chapter_index'], ', 更新時間:', self.last_chapter_info['uptime'],
-              '\n  章節:', self.chapter_list[-1]['chapter_title'])
+        print(msg.m('show_last_chap_s_index'), self.chapter_list[-1]['chapter_index'], msg.m('show_last_chap_uptime'), self.last_chapter_info['uptime'],
+              msg.m('show_last_chap_name'), self.chapter_list[-1]['chapter_title'])
 
     def fix_illegal_book_name(self):
         return self.book_name.replace('<', '＜').replace('>', '＞').replace(':', '：').replace('"', '“') \
@@ -103,7 +103,7 @@ class Book:
     def show_chapter_list_order_division(self):
         for division in self.division_list:
             chapter_order = 1
-            print('分卷:', division['division_index'], ',:', division['division_name'])
+            print(msg.m('show_chap_list_index'), division['division_index'], ',:', division['division_name'])
             for chapter_info in self.division_chapter_list[division['division_name']]:
                 print(' ' + chapter_info['chapter_index'] + ', ' + division['division_index'] + "-" +
                       str(chapter_order) + "-" + str(chapter_info['chapter_id']) + ' ' + division['division_name'] +
@@ -135,7 +135,7 @@ class Book:
                             print('\r' + chapter_info['chapter_index'].rjust(5, "0") + ', ' + division[
                                 'division_index'].rjust(4, "0") + "-" +
                                   str(chapter_order).rjust(6, "0") + "-" + str(chapter_info['chapter_id']) +
-                                  ".xhtml，章節遭屏蔽，無法下載，以空檔案標記。\n" + division['division_name'] + '：' + chapter_info[
+                                  msg.m('dl_chap_block_e') + division['division_name'] + '：' + chapter_info[
                                       'chapter_title'] +
                                   "\n" + str(self.downloaded_count) + ' / ' + str(
                                 self.process_finished_count) + " / " + str(
@@ -144,7 +144,7 @@ class Book:
                             print('\r' + chapter_info['chapter_index'].rjust(5, "0") + ', ' + division[
                                 'division_index'].rjust(4, "0") + "-" +
                                   str(chapter_order).rjust(6, "0") + "-" + str(chapter_info['chapter_id']) +
-                                  ".xhtml，章節屏蔽無法下載，使用本地檔案。\n" + division['division_name'] + '：' + chapter_info[
+                                  msg.m('dl_chap_block_c') + division['division_name'] + '：' + chapter_info[
                                       'chapter_title'] +
                                   "\n" + str(self.downloaded_count) + ' / ' + str(
                                 self.process_finished_count) + " / " + str(
@@ -156,7 +156,7 @@ class Book:
                         print('\r' + chapter_info['chapter_index'].rjust(5, "0") + ', ' + division[
                             'division_index'].rjust(4, "0") + "-" +
                               str(chapter_order).rjust(6, "0") + "-" + str(chapter_info['chapter_id']) +
-                              ".xhtml，章節屏蔽無法下載，以空檔案標記。\n" + division['division_name'] + '：' + chapter_info[
+                              msg.m('dl_chap_block_e') + division['division_name'] + '：' + chapter_info[
                                   'chapter_title'] +
                               "\n" + str(self.downloaded_count) + ' / ' + str(
                             self.process_finished_count) + " / " + str(
@@ -168,7 +168,7 @@ class Book:
                     print(
                         '\r' + chapter_info['chapter_index'].rjust(5, "0") + ', ' +
                         division['division_index'].rjust(4, "0") + '-' + str(chapter_order).rjust(6, "0") + '-' +
-                        chapter_info['chapter_id'] + '，該章節未訂閱無法下載。\n' + division['division_name'] + '：' +
+                        chapter_info['chapter_id'] + msg.m('dl_chap_not_paid') + division['division_name'] + '：' +
                         chapter_info['chapter_title'] + "\n" + str(self.downloaded_count) + ' / ' +
                         str(self.process_finished_count) + " / " + str(len(self.chapter_list)), end=' ')
                 else:
@@ -180,7 +180,7 @@ class Book:
                 chapter_order += 1
         for thread in threads:
             thread.join()
-        print("\n\n下載完畢...匯出書籍...", end='')
+        print(msg.m('dl_fin'), end='')
 
         if self.downloaded_count == 0:
             if os.path.exists(self.epub.tempdir + '/OEBPS/Text'):
@@ -193,6 +193,7 @@ class Book:
             else:
                 epub_mod_time = 0
             if text_mod_time >= epub_mod_time:
+                print(msg.m('expo_s'), end='')
                 if not os.path.isdir("Hbooker"):
                     os.makedirs("Hbooker")
                 if not os.path.isdir("Hbooker/" + self.fix_illegal_book_name()):
@@ -203,10 +204,11 @@ class Book:
                 # self.config.data['book_info'] = self.book_info
                 # self.config.data['division_chapter_list'] = self.division_chapter_list
                 # self.config.save()
-                print("匯出完成...\n\n")
+                print(msg.m('expo_e'))
             else:
-                print("書籍無更新...\n\n")
+                print(msg.m('expo_no'))
         else:
+            print(msg.m('expo_s'), end='')
             if not os.path.isdir("Hbooker"):
                 os.makedirs("Hbooker")
             if not os.path.isdir("Hbooker/" + self.fix_illegal_book_name()):
@@ -217,8 +219,7 @@ class Book:
             # self.config.data['book_info'] = self.book_info
             # self.config.data['division_chapter_list'] = self.division_chapter_list
             # self.config.save()
-            print("匯出完成...\n\n")
-
+            print(msg.m('expo_e'))
         self.process_finished_count = 0
         self.downloaded_count = 0
 
@@ -236,7 +237,7 @@ class Book:
                 # 章節檔案大小為0 重新下載
                 print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + "-" +
                       str(chapter_order).rjust(6, "0") + "-" + str(chapter_id) +
-                      ".xhtml，發現缺失章節(空檔案)，重新下載。\n" + division_name + '：' + chapter_title +
+                      msg.m('dl_0_chap_re_dl') + division_name + '：' + chapter_title +
                       "\n" + str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
                     len(self.chapter_list)), end=' ')
             else:
@@ -277,21 +278,23 @@ class Book:
                     self.get_chapter_catalog_mt_dl_lock.release()
                     return True
                 else:
+                    # 異常狀況，態異常，已訂閱但無法下載。
                     self.add_process_finished_count()
                     print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
-                          str(chapter_order).rjust(6, "0") + '-' + chapter_id + '，該章節未訂閱無法下載。\n' +
+                          str(chapter_order).rjust(6, "0") + '-' + chapter_id + msg.m('dl_error_paid_stat_conflict') +
                           division_name + '：' + chapter_title + "\n" +
                           str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
                         len(self.chapter_list)), end=' ')
                     self.get_chapter_catalog_mt_dl_lock.release()
                     return False
             else:
+                # 章節下載異常，請再次嘗試下載
                 with codecs.open(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml', 'w', 'utf-8') as _file:
                     pass
                 self.add_process_finished_count()
                 print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
                       str(chapter_order).rjust(6, "0") + '-' + chapter_id +
-                      ".xhtml，章節缺失以空檔案標記。\n" + division_name + '：' + chapter_title + "\n" +
+                      msg.m('dl_error_chap_get_failed_1') + division_name + '：' + chapter_title + "\n" +
                       str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
                     len(self.chapter_list)), end=' ')
                 self.get_chapter_catalog_mt_dl_lock.release()
@@ -300,7 +303,7 @@ class Book:
             self.concurrent_download_queue.put(q_item)
             self.add_process_finished_count()
             print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
-                  str(chapter_order).rjust(6, "0") + '-' + chapter_id + "，錯誤。\n" +
+                  str(chapter_order).rjust(6, "0") + '-' + chapter_id + msg.m('dl_error_chap_get_failed_2') +
                   division_name + '：' + chapter_title + "\n" +
                   str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
                 len(self.chapter_list)), end=' ')
