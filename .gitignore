@@ -9,6 +9,8 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
+Cache/
+Hbooker/
 develop-eggs/
 dist/
 downloads/
@@ -99,3 +101,6 @@ ENV/
 .mypy_cache/
 
 .idea/
+Build deploy.py
+cheak_in_only.py
+HbookerAppNovelDownloader - Config.json

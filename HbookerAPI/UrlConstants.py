@@ -1,4 +1,3 @@
-
 ABOUT_URL = "https://app.hbooker.com/setting/view_about"
 ADD_BBS_COMMENT = "bbs/add_bbs_comment"
 ADD_BBS_COMMENT_REPLY = "bbs/add_bbs_comment_reply"
@@ -186,6 +185,7 @@ SHELF_TUIJIAN = "https://app.hbooker.com/bookshelf/get_bookself_reommend_list"
 SIGNUP_AUTO_LOGIN = "signup/auto_login"
 SIGNUP_AUTO_REQ = "signup/auto_reg"
 SIGN_RECORD = "task/get_sign_record"
+SING_RECORD_TASK = "reader/get_task_bonus_with_sign_recommend"
 START_PAGE = "setting/get_startpage_url"
 SYS_MSG = "reader/get_message_sys_list"
 THIRD_SWITCH = "setting/thired_party_switch"

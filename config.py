@@ -14,7 +14,7 @@ class Config:
 
     def load(self):
         try:
-            with open(self.file_path, 'r') as f:
+            with open(self.file_path, 'r', encoding='utf-8') as f:
                 self.data = json.load(f) or {}
         except FileNotFoundError:
             try:
@@ -23,11 +23,11 @@ class Config:
                 with open(self.file_path, 'w'):
                     pass
             except Exception as e:
-                print('[错误]', e)
-                print('创建配置文件时出错')
+                print('error: ', e)
+                print('error: while creating config file: ' + self.file_path)
         except Exception as e:
-            print('[错误]', e)
-            print('读取配置文件时出错')
+            print('error: ', e)
+            print('error: while reading config file: ' + self.file_path)
 
     def save(self):
         try:
@@ -36,5 +36,5 @@ class Config:
             with open(self.file_path, 'w') as f:
                 json.dump(self.data, f)
         except Exception as e:
-            print('[错误]', e)
-            print('保存配置文件时出错')
+            print('error: ', e)
+            print('error: while saving config file: ' + self.file_path)
