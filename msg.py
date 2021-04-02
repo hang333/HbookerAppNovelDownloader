@@ -1,5 +1,5 @@
 lang = {}
-TC = {
+_TC = {
     # msg
     'lang': "提示訊息切換為繁體中文",
     # run
@@ -86,7 +86,7 @@ u <path.txt> | update <path.txt>\t\t\t--- 下載指定書單中所列書籍
 """
 }
 # 下載指定檔案"list_path.txt"中的所有書籍
-SC = {
+_SC = {
     # msg
     'lang': "提示讯息切换为简体中文",
     # run
@@ -177,9 +177,9 @@ u <path.txt> | update <path.txt>\t\t\t--- 下载指定书单中所列书籍
 def set_message_lang(tc: bool = False):
     global lang
     if tc:
-        lang = TC
+        lang = _TC
     else:
-        lang = SC
+        lang = _SC
 
 
 def m(key: str = ''):

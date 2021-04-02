@@ -1,5 +1,6 @@
 from datetime import datetime
 from shutil import copyfile
+from instance import *
 import urllib.request
 import zipfile
 import codecs
@@ -8,7 +9,7 @@ import msg
 import os
 import re
 
-set_max_image_retry = 10
+image_get_retry = 10
 
 
 def str_mid(string: str, left: str, right: str, start=None, end=None):
@@ -38,18 +39,20 @@ def html_element_to_text_unescape(element: str):
     return element.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
 
 
-def copy_add_suffix_if_exists_add_index(file_path: str, suffix: str):
-    file_base = os.path.splitext(file_path)[0] + ' ' + suffix
+def backup_copy_add_suffix_if_exists_add_index(file_path: str, suffix: str):
+    backup_dir = Vars.cfg.data['backup_dir'] + os.path.splitext(os.path.basename(file_path))[0]
+    file_basename = os.path.splitext(os.path.basename(file_path))[0] + ' ' + suffix
     file_ext = os.path.splitext(file_path)[1]
-
+    if not os.path.isdir(backup_dir):
+        os.makedirs(backup_dir)
     if os.path.exists(file_path):
-        if os.path.exists(file_base + file_ext):
+        if os.path.exists(backup_dir + '/' + file_basename + file_ext):
             index = 1
-            while os.path.exists(file_base + ' ' + str(index) + file_ext):
+            while os.path.exists(backup_dir + '/' + file_basename + ' ' + str(index) + file_ext):
                 index += 1
-            copyfile(file_path, file_base + ' ' + str(index) + file_ext)
+            copyfile(file_path, backup_dir + '/' + file_basename + ' ' + str(index) + file_ext)
         else:
-            copyfile(file_path, file_base + file_ext)
+            copyfile(file_path, backup_dir + '/' + file_basename + file_ext)
     else:
         # 出現錯誤
         print("error: file dose not exists: " + file_path)
@@ -69,8 +72,7 @@ class EpubFile:
     _chapter_format_navMap = ''
     _chapter_format = ''
 
-    def __init__(self, filepath: str, tempdir: str, book_id: str, book_title: str, book_author: str,
-                 read_old_epub=True):
+    def __init__(self, filepath: str, tempdir: str, book_id: str, book_title: str, book_author: str, use_old_epub=True):
         self._filepath = filepath
         self.tempdir = tempdir
         if not os.path.isdir(tempdir):
@@ -84,7 +86,7 @@ class EpubFile:
         self._toc_ncx = bytes(_template.read('OEBPS/toc.ncx')).decode()
         self._chapter_format_navMap = str_mid(self._toc_ncx, '${chapter_format_navMap}={{{', '}}}')
         self._chapter_format = bytes(_template.read('OEBPS/Text/${chapter_format}.xhtml')).decode()
-        if os.path.isfile(filepath) and read_old_epub:
+        if os.path.isfile(filepath) and use_old_epub:
             try:
                 with zipfile.ZipFile(self._filepath, 'r', zipfile.ZIP_DEFLATED) as _file:
                     try:
@@ -172,15 +174,15 @@ class EpubFile:
         if os.path.exists(image_path):
             if os.path.getsize(image_path) != 0:
                 return
-        for retry in range(set_max_image_retry):
+        for retry in range(image_get_retry):
             try:
                 urllib.request.urlretrieve(url, image_path)
                 copyfile(image_path, self.tempdir + '/OEBPS/Images/cover.jpg')
                 return
             except OSError as e:
-                if retry != set_max_image_retry - 1:
-                    print(msg.m('cover_dl_rt') + str(retry + 1) + ' / ' + str(set_max_image_retry) + ', ' + str(e) +
-                          '\n' + url)
+                if retry != image_get_retry - 1:
+                    print(msg.m('cover_dl_rt') + str(retry + 1) + ' / ' + str(image_get_retry) + ', ' + str(e) + '\n' +
+                          url)
                     time.sleep(0.5 * retry)
                 else:
                     print(msg.m('cover_dl_f') + str(e) + '\n' + url)
@@ -199,14 +201,14 @@ class EpubFile:
         if os.path.exists(image_path):
             if os.path.getsize(image_path) != 0:
                 return
-        for retry in range(set_max_image_retry):
+        for retry in range(image_get_retry):
             try:
                 urllib.request.urlretrieve(url, image_path)
                 return
             except OSError as e:
-                if retry != set_max_image_retry - 1:
-                    print(msg.m('image_dl_rt') + str(retry + 1) + ' / ' + str(set_max_image_retry) + ', ' + str(e) + '\n'
-                          + url)
+                if retry != image_get_retry - 1:
+                    print(msg.m('image_dl_rt') + str(retry + 1) + ' / ' + str(image_get_retry) + ', ' + str(e) + '\n' +
+                          url)
                     time.sleep(0.5 * retry)
                 else:
                     print(msg.m('image_dl_f') + str(e) + '\n' + url)
@@ -287,9 +289,11 @@ class EpubFile:
         self.make_backup()
 
     def make_backup(self):
-        date = str(datetime.now().date())
-        copy_add_suffix_if_exists_add_index(self._filepath, date)
-        copy_add_suffix_if_exists_add_index(os.path.splitext(self._filepath)[0] + '.txt', date)
+        print("do back: " + str(Vars.cfg.data['do_backup']))
+        if Vars.cfg.data['do_backup']:
+            date = str(datetime.now().date())
+            backup_copy_add_suffix_if_exists_add_index(self._filepath, date)
+            backup_copy_add_suffix_if_exists_add_index(os.path.splitext(self._filepath)[0] + '.txt', date)
 
     def make_cover_text(self, book_name: str, author_name: str, book_description: str, update_time: str):
         text = '<h1>' + text_to_html_element_escape(book_name) + '</h1>\r\n<h2>作者: ' + \

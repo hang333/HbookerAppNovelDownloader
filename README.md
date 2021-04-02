@@ -120,6 +120,15 @@
   * 可以切換提示訊息繁體/簡體，輸入  
   ```m```
   * **僅介面提示訊息**，與匯出的書籍無關  
+  ###可更黨檔案保存位置  
+  * 可以編輯`HbookerAppNovelDownloader - Config.json`檔案中的以下的"`./XXX/`"來改變檔案保存位置
+    * 書籍匯出位置: "output_dir": "`./Hbooker/`"  
+    * 書籍備份匯出位置: "backup_dir": "`./Hbooker/`"  
+    * 暫存檔案位置: "cache_dir": "`./Cache/`"  
+  ### 可以選擇是否會在書籍匯出時生成備份  
+  * 可以編輯`HbookerAppNovelDownloader - Config.json`檔案中的以下的 "do_backup": `true`  
+    * 啟用 "do_backup": `true`  
+    * 停用 "do_backup": `false`  
 ## 與原版差異/改動
 * \+ **簽到功能(領代幣)，(自動簽到)**。
 * \+ **下載章節與獲取書籍目錄時使用多工，加快下載速度(取代原download)**，  

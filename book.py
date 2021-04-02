@@ -1,4 +1,3 @@
-# from config import *
 from Epub import *
 import HbookerAPI
 import threading
@@ -22,7 +21,7 @@ class Book:
     config = None
     file_path = None
 
-    def __init__(self, index, book_info, max_concurrent_downloads: int = 32):
+    def __init__(self, index, book_info):
         self.index = index
         self.book_info = book_info
         self.book_id = book_info['book_id']
@@ -35,11 +34,12 @@ class Book:
         self.division_chapter_list = {}
         self.get_chapter_catalog_mt_dl_lock = threading.Lock()
         self.concurrent_download_queue = queue.Queue()
-        for item in range(max_concurrent_downloads):
+        for item in range(Vars.cfg.data['max_concurrent_downloads']):
             self.concurrent_download_queue.put(item)
         self.process_finished_count = 0
         self.downloaded_count = 0
-        # self.config = Config('./Cache/book-' + self.fix_illegal_book_name() + '.json', './Cache/')
+        # self.config = Config(Vars.cfg.data['cache_dir'] + 'book-' + self.fix_illegal_book_name() + '.json',
+        #                      Vars.cfg.data['cache_dir'])
         # self.config.load()
 
     def get_division_list(self):
@@ -80,7 +80,7 @@ class Book:
         self.chapter_list.sort(key=lambda x: int(x['chapter_index']))
         print("\r", end="")
 
-    def show_latest_chapter_(self):
+    def show_latest_chapter(self):
         print(msg.m('show_last_chap_s_index'), self.chapter_list[-1]['chapter_index'], msg.m('show_last_chap_uptime'),
               self.last_chapter_info['uptime'], msg.m('show_last_chap_name'), self.chapter_list[-1]['chapter_title'])
 
@@ -98,11 +98,12 @@ class Book:
                       '：' + chapter_info['chapter_title'])
                 chapter_order += 1
 
-    def download_book_multi_thread(self, ):
-        self.file_path = './Hbooker/' + self.fix_illegal_book_name() + '/' + self.fix_illegal_book_name() + '.epub '
-        self.epub = EpubFile(self.file_path, './Cache/' + self.fix_illegal_book_name(), self.book_id,
+    def download_book_multi_thread(self):
+        self.file_path = Vars.cfg.data['output_dir'] + self.fix_illegal_book_name() + '/' + \
+                         self.fix_illegal_book_name() + '.epub '
+        self.epub = EpubFile(self.file_path, Vars.cfg.data['cache_dir'] + self.fix_illegal_book_name(), self.book_id,
                              self.book_name,
-                             self.author_name, read_old_epub=False)
+                             self.author_name, use_old_epub=False)
         self.epub.set_cover(self.cover)
         threads = []
         # for every chapter in order of division
@@ -174,17 +175,15 @@ class Book:
                 text_mod_time = os.path.getmtime(self.epub.tempdir + '/OEBPS/Text')
             else:
                 text_mod_time = 0
-            if os.path.exists('Hbooker/' + self.fix_illegal_book_name() + '/' + self.fix_illegal_book_name() + '.epub'):
+            if os.path.exists(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name() + '/' + self.fix_illegal_book_name() + '.epub'):
                 epub_mod_time = os.path.getmtime(
-                    'Hbooker/' + self.fix_illegal_book_name() + '/' + self.fix_illegal_book_name() + '.epub')
+                    Vars.cfg.data['output_dir'] + self.fix_illegal_book_name() + '/' + self.fix_illegal_book_name() + '.epub')
             else:
                 epub_mod_time = 0
             if text_mod_time >= epub_mod_time:
                 print(msg.m('expo_s'), end='')
-                if not os.path.isdir("Hbooker"):
-                    os.makedirs("Hbooker")
-                if not os.path.isdir("Hbooker/" + self.fix_illegal_book_name()):
-                    os.makedirs("Hbooker/" + self.fix_illegal_book_name())
+                if not os.path.isdir(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name()):
+                    os.makedirs(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name())
                 self.epub.make_cover_text(self.book_info['book_name'], self.book_info['author_name'],
                                           self.book_info['description'], self.book_info['uptime'])
                 self.epub.download_book_write_chapter(self.division_chapter_list)
@@ -196,10 +195,10 @@ class Book:
                 print(msg.m('expo_no'))
         else:
             print(msg.m('expo_s'), end='')
-            if not os.path.isdir("Hbooker"):
-                os.makedirs("Hbooker")
-            if not os.path.isdir("Hbooker/" + self.fix_illegal_book_name()):
-                os.makedirs("Hbooker/" + self.fix_illegal_book_name())
+            if not os.path.isdir(Vars.cfg.data['output_dir']):
+                os.makedirs(Vars.cfg.data['output_dir'])
+            if not os.path.isdir(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name()):
+                os.makedirs(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name())
             self.epub.make_cover_text(self.book_info['book_name'], self.book_info['author_name'],
                                       self.book_info['description'], self.book_info['uptime'])
             self.epub.download_book_write_chapter(self.division_chapter_list)
