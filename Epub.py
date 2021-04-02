@@ -1,12 +1,12 @@
-import zipfile
-import re
-import os
-import codecs
+from datetime import datetime
+from shutil import copyfile
 import urllib.request
-from os import path
+import zipfile
+import codecs
 import time
-import datetime
-import shutil
+import msg
+import os
+import re
 
 set_max_image_retry = 10
 
@@ -47,11 +47,12 @@ def copy_add_suffix_if_exists_add_index(file_path: str, suffix: str):
             index = 1
             while os.path.exists(file_base + ' ' + str(index) + file_ext):
                 index += 1
-            shutil.copyfile(file_path, file_base + ' ' + str(index) + file_ext)
+            copyfile(file_path, file_base + ' ' + str(index) + file_ext)
         else:
-            shutil.copyfile(file_path, file_base + file_ext)
+            copyfile(file_path, file_base + file_ext)
     else:
-        print("file dose not exists: " + file_path)
+        # 出現錯誤
+        print("error: file dose not exists: " + file_path)
 
 
 class EpubFile:
@@ -74,7 +75,7 @@ class EpubFile:
         self.tempdir = tempdir
         if not os.path.isdir(tempdir):
             os.makedirs(tempdir)
-        _template = zipfile.ZipFile(path.abspath(path.join(path.dirname(__file__), 'template.epub')))
+        _template = zipfile.ZipFile(os.path.abspath(os.path.join(os.path.dirname(__file__), 'template.epub')))
         self.cover_template = bytes(_template.read('OEBPS/Text/cover.xhtml')).decode()
         self._content_opf = bytes(_template.read('OEBPS/content.opf')).decode()
         self._chapter_format_manifest = str_mid(self._content_opf, '${chapter_format_manifest}={{{', '}}}')
@@ -118,10 +119,6 @@ class EpubFile:
             self._toc_ncx = self._toc_ncx.replace('${book_id}', book_id)
             self._toc_ncx = self._toc_ncx.replace('${book_title}', text_to_html_element_escape(book_title))
             self._toc_ncx = self._toc_ncx.replace('${book_author}', text_to_html_element_escape(book_author))
-            # with codecs.open(self._tempdir + '/OEBPS/content.opf', 'w', 'utf-8') as _file:
-            #     _file.write(self._content_opf)
-            # with codecs.open(self._tempdir + '/OEBPS/toc.ncx', 'w', 'utf-8') as _file:
-            #     _file.write(self._toc_ncx)
         _template.close()
 
     def _add_manifest_chapter(self, chapter_id: str):
@@ -178,14 +175,15 @@ class EpubFile:
         for retry in range(set_max_image_retry):
             try:
                 urllib.request.urlretrieve(url, image_path)
-                shutil.copyfile(image_path, self.tempdir + '/OEBPS/Images/cover.jpg')
+                copyfile(image_path, self.tempdir + '/OEBPS/Images/cover.jpg')
                 return
             except OSError as e:
                 if retry != set_max_image_retry - 1:
-                    print("下載封面圖片失敗，重試: " + str(e) + '\n' + url)
+                    print(msg.m('cover_dl_rt') + str(retry + 1) + ' / ' + str(set_max_image_retry) + ', ' + str(e) +
+                          '\n' + url)
                     time.sleep(0.5 * retry)
                 else:
-                    print("下載封面圖片失敗，放棄: " + str(e) + '\n' + url)
+                    print(msg.m('cover_dl_f') + str(e) + '\n' + url)
                     with open(image_path, 'wb'):
                         pass
 
@@ -196,7 +194,7 @@ class EpubFile:
             for _name in _result:
                 _file.write(_name, _name.replace(self.tempdir + '/', ''))
 
-    def add_image_mt(self, filename: str, url: str):
+    def add_image(self, filename: str, url: str):
         image_path = self.tempdir + '/OEBPS/Images/' + filename
         if os.path.exists(image_path):
             if os.path.getsize(image_path) != 0:
@@ -207,15 +205,16 @@ class EpubFile:
                 return
             except OSError as e:
                 if retry != set_max_image_retry - 1:
-                    print("下載圖片失敗，重試: " + str(e) + '\n' + url)
+                    print(msg.m('image_dl_rt') + str(retry + 1) + ' / ' + str(set_max_image_retry) + ', ' + str(e) + '\n'
+                          + url)
                     time.sleep(0.5 * retry)
                 else:
-                    print("下載圖片時出現錯誤，放棄: " + str(e) + '\n' + url)
+                    print(msg.m('image_dl_f') + str(e) + '\n' + url)
                     with open(image_path, 'wb'):
                         pass
 
-    def add_chapter_mt(self, chapter_id: str, division_name: str, chapter_title: str, chapter_content: str,
-                       division_index, chapter_order):
+    def add_chapter(self, chapter_id: str, division_name: str, chapter_title: str, chapter_content: str,
+                    division_index, chapter_order):
         f_name = division_index.rjust(4, "0") + '-' + str(chapter_order).rjust(6, "0") + '-' + chapter_id
         _data = self._chapter_format.replace(
             '<title>${chapter_title}</title>', '<title>' + text_to_html_element_escape(division_name) + ' : ' +
@@ -228,7 +227,7 @@ class EpubFile:
             if _src.rfind('/') == -1:
                 continue
             filename = _src[_src.rfind('/') + 1:]
-            self.add_image_mt(filename, _src)
+            self.add_image(filename, _src)
             _data = _data.replace(_src, '../Images/' + filename)
             _data = re.sub(
                 f"(<img src=[\"\']\\.\\./Images/{filename}[\"\'] *alt=[\"\'][^\"^\']+[\"\'] *)(?!( ))(?!(/>))[/>]?",
@@ -236,7 +235,7 @@ class EpubFile:
         with codecs.open(self.tempdir + '/OEBPS/Text/' + f_name + '.xhtml', 'w', 'utf-8') as _file:
             _file.write(_data)
 
-    def download_book_mt_write_chapter(self, division_chapter_list):
+    def download_book_write_chapter(self, division_chapter_list):
         order_count = 2
         with codecs.open(os.path.splitext(self._filepath)[0] + ".txt", 'w', 'utf-8') as _file:
             with codecs.open(self.tempdir + '/OEBPS/Text/cover.xhtml', 'r', 'utf-8') as _cover_xhtml:
@@ -246,7 +245,6 @@ class EpubFile:
                     replace('</h3>', '').replace('<p>', '').replace('</p>', '')
                 cover = html_element_to_text_unescape(cover)
                 _file.write(cover + '\r\n')
-
             for filename in sorted(os.listdir(self.tempdir + '/OEBPS/Text/')):
                 if filename.find('$') > -1 or filename == 'cover.xhtml':
                     continue
@@ -255,9 +253,7 @@ class EpubFile:
                 self._add_spine(f_name)
                 with codecs.open(self.tempdir + '/OEBPS/Text/' + filename, 'r', 'utf-8') as _file_xhtml:
                     _data_chapter = re.sub(r'<h3>.*?</h3>', '', _file_xhtml.read())
-
                 division_and_chapter_file = str_mid(_data_chapter, "<title>", "</title>")
-
                 if division_and_chapter_file == '':
                     division_name = ''
                     chapter_title = ''
@@ -274,7 +270,6 @@ class EpubFile:
                         division_and_chapter_file = text_to_html_element_escape(filename)
                     else:
                         division_and_chapter_file = text_to_html_element_escape(division_name + ' : ' + chapter_title)
-
                 self.add_nav_map(str(order_count), f_name, division_and_chapter_file)
                 for _a in re.findall(r'<a href=.*?>章节链接</a>', _data_chapter):
                     _data_chapter = _data_chapter.replace(_a, '章节链接:' + str_mid(_a, '<a href="', '"'))
@@ -289,11 +284,10 @@ class EpubFile:
             for filename in sorted(os.listdir(self.tempdir + '/OEBPS/Images/')):
                 self._add_manifest_image(filename)
         self.export()
-
         self.make_backup()
 
     def make_backup(self):
-        date = str(datetime.datetime.now().date())
+        date = str(datetime.now().date())
         copy_add_suffix_if_exists_add_index(self._filepath, date)
         copy_add_suffix_if_exists_add_index(os.path.splitext(self._filepath)[0] + '.txt', date)
 
