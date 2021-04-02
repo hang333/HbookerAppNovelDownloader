@@ -143,11 +143,9 @@ def check_in_today():
             or Vars.cfg.data.get('user_password') is None or Vars.cfg.data.get('user_password') == "":
         print(msg.m('not_login_pl_login'))
         return False
-
-    today = str((datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(hours=8)).date())
     check_in_records = HbookerAPI.CheckIn.get_check_in_records()
     if check_in_records.get('code') == '100000':
-        if check_in_today_do(check_in_records, today):
+        if check_in_today_do(check_in_records):
             return True
         else:
             return False
@@ -162,7 +160,7 @@ def check_in_today():
             print(msg.m('check_in_re_login_retry_check_in'))
             check_in_records = HbookerAPI.CheckIn.get_check_in_records()
             if check_in_records.get('code') == '100000':
-                if check_in_today_do(check_in_records, today):
+                if check_in_today_do(check_in_records):
                     return True
                 else:
                     return False
@@ -177,7 +175,11 @@ def check_in_today():
         return False
 
 
-def check_in_today_do(check_in_records, today):
+def check_in_today_do(check_in_records):
+    # UTC+8
+    server_time = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(hours=8)
+    print(str(server_time.date()) + " " + str(server_time.hour) + ":" + str(server_time.minute))
+    today = str(server_time.date())
     for record in check_in_records['data']['sign_record_list']:
         if record['date'] == today:
             if record['is_signed'] == '0':
