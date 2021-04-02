@@ -289,7 +289,6 @@ class EpubFile:
         self.make_backup()
 
     def make_backup(self):
-        print("do back: " + str(Vars.cfg.data['do_backup']))
         if Vars.cfg.data['do_backup']:
             date = str(datetime.now().date())
             backup_copy_add_suffix_if_exists_add_index(self._filepath, date)
