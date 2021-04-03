@@ -70,8 +70,7 @@ def shell_select_books(inputs):
             if Vars.current_book is not None:
                 response = HbookerAPI.Book.get_info_by_id(Vars.current_book.book_id)
                 if response.get('code') == '100000':
-                    Vars.current_book = Book(None, response['data']['book_info'],
-                                             max_concurrent_downloads=max_concurrent_downloads)
+                    Vars.current_book = Book(None, response['data']['book_info'])
                 else:
                     print(msg.m('failed_get_book_info_index'), inputs[1])
                     return
@@ -89,7 +88,7 @@ def shell_select_books(inputs):
         Vars.current_book.get_chapter_catalog()
         if len(inputs) < 3:
             Vars.current_book.show_division_list()
-            Vars.current_book.show_latest_chapter_()
+            Vars.current_book.show_latest_chapter()
     else:
         if Vars.current_book is not None:
             Vars.current_book.show_chapter_list_order_division()
@@ -227,6 +226,39 @@ def shell_switch_message_charter_set():
     print(msg.m('lang'))
 
 
+def setup_config():
+    Vars.cfg.load()
+    config_change = False
+    if type(Vars.cfg.data.get('interface_traditional_chinese')) is not bool:
+        Vars.cfg.data['interface_traditional_chinese'] = False
+        msg.set_message_lang()
+        config_change = True
+    msg.set_message_lang(Vars.cfg.data['interface_traditional_chinese'])
+
+    if type(Vars.cfg.data.get('cache_dir')) is not str or Vars.cfg.data.get('cache_dir') == "":
+        Vars.cfg.data['cache_dir'] = "./Cache/"
+        config_change = True
+
+    if type(Vars.cfg.data.get('output_dir')) is not str or Vars.cfg.data.get('output_dir') == "":
+        Vars.cfg.data['output_dir'] = "./Hbooker/"
+        config_change = True
+
+    if type(Vars.cfg.data.get('do_backup')) is not bool:
+        Vars.cfg.data['do_backup'] = True
+        config_change = True
+
+    if type(Vars.cfg.data.get('backup_dir')) is not str or Vars.cfg.data.get('backup_dir') == "":
+        Vars.cfg.data['backup_dir'] = "./Hbooker/"
+        config_change = True
+
+    if type(Vars.cfg.data.get('max_concurrent_downloads')) is not int:
+        Vars.cfg.data['max_concurrent_downloads'] = 32
+        config_change = True
+
+    if config_change:
+        Vars.cfg.save()
+
+
 def shell():
     if Vars.cfg.data.get('user_code') is not None:
         HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
@@ -292,18 +324,9 @@ def shell():
 
 
 if __name__ == "__main__":
-    Vars.cfg.load()
-    if type(Vars.cfg.data.get('interface_traditional_chinese')) is not bool:
-        Vars.cfg.data['interface_traditional_chinese'] = False
-        Vars.cfg.save()
-        msg.set_message_lang()
-    else:
-        msg.set_message_lang(Vars.cfg.data['interface_traditional_chinese'])
+
+    setup_config()
+
     agreed_read_readme()
-    if type(Vars.cfg.data.get('max_concurrent_downloads')) is not int:
-        Vars.cfg.data['max_concurrent_downloads'] = 32
-        Vars.cfg.save()
-        max_concurrent_downloads = 32
-    else:
-        max_concurrent_downloads = Vars.cfg.data.get('max_concurrent_downloads')
+
     shell()

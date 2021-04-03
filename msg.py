@@ -1,5 +1,5 @@
 lang = {}
-TC = {
+_TC = {
     # msg
     'lang': "提示訊息切換為繁體中文",
     # run
@@ -52,10 +52,10 @@ TC = {
     'dl_chap_block_e': ".xhtml，章節屏蔽無法下載，以空檔案標記。\n",
     'dl_chap_block_c': ".xhtml，章節屏蔽無法下載，使用本地檔案。\n",
     'dl_chap_not_paid': "，該章節未訂閱無法下載。\n",
-    'dl_fin': "\n\n下載完畢",
+    'dl_fin': "\n\n下載完畢...",
     'expo_s': "匯出書籍...",
-    'expo_e': "匯出完成...\n\n",
-    'expo_no': "書籍無更新...\n\n",
+    'expo_e': "匯出完成\n\n",
+    'expo_no': "書籍無更新\n\n",
     'dl_0_chap_re_dl': ".xhtml，發現缺失章節(空檔案)，重新下載。\n",
     'dl_error_paid_stat_conflict': "，錯誤，該章節訂授權態異常無法下載，請再次嘗試下載。!!!!!\n",
     'dl_error_chap_get_failed_1': ".xhtml，錯誤，章節下載異常，請重新嘗試下載，章節缺失以空檔案標記!!!!!\n",
@@ -86,7 +86,7 @@ u <path.txt> | update <path.txt>\t\t\t--- 下載指定書單中所列書籍
 """
 }
 # 下載指定檔案"list_path.txt"中的所有書籍
-SC = {
+_SC = {
     # msg
     'lang': "提示讯息切换为简体中文",
     # run
@@ -139,10 +139,10 @@ SC = {
     'dl_chap_block_e': ".xhtml，章节屏蔽无法下载，以空档案标记。\n",
     'dl_chap_block_c': ".xhtml，章节屏蔽无法下载，使用本地档案。\n",
     'dl_chap_not_paid': "，该章节未订阅无法下载。\n",
-    'dl_fin': "\n\n下载完毕",
+    'dl_fin': "\n\n下载完毕...",
     'expo_s': "汇出书籍...",
-    'expo_e': "汇出完成...\n\n",
-    'expo_no': "书籍无更新...\n\n",
+    'expo_e': "汇出完成\n\n",
+    'expo_no': "书籍无更新\n\n",
     'dl_0_chap_re_dl': ".xhtml，發现缺失章节(空档案)，重新下载。\n",
     'dl_error_paid_stat_conflict': "，错误，该章节订授权态异常无法下载，请再次尝试下载。!!!!!\n",
     'dl_error_chap_get_failed_1': ".xhtml，错误，章节下载异常，请重新尝试下载，章节缺失以空档案标记!!!!!\n",
@@ -177,9 +177,9 @@ u <path.txt> | update <path.txt>\t\t\t--- 下载指定书单中所列书籍
 def set_message_lang(tc: bool = False):
     global lang
     if tc:
-        lang = TC
+        lang = _TC
     else:
-        lang = SC
+        lang = _SC
 
 
 def m(key: str = ''):
