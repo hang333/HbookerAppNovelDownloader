@@ -30,6 +30,12 @@ _TC = {
     'failed_get_book_info_id': "獲取書籍信息失敗, book_id:",
     'not_picked_book': "未選擇書籍",
     'start_book_dl': "開始下載書籍...\n",
+    'app_update_info': "獲取更新訊息 : \n",
+    'current_version_var': "目前版本號 : ",
+    'get_app_version_var': "獲取版本號 : ",
+    'confirm_change_version_var': "是否使用\"獲取版本號\"替換\"目前版本號\"\n確定:輸入\"yes\", 取消:輸入其他字符",
+    'confirm_msg': "確認",
+    'cancel_msg': "取消",
     # shelf
     'shelf_index': "書架编號:",
     'shelf_name': ", 書架名:",
@@ -72,6 +78,7 @@ _TC = {
 h | help\t\t\t\t\t\t--- 顯示說明 (此訊息)
 m | message\t\t\t\t\t\t--- 切換提示訊息 (繁體/簡體)
 q | quit\t\t\t\t\t\t--- 退出腳本
+version\t\t\t\t\t\t\t--- 從網路獲取現在版本號，詢問是否刷新版本號 (輸入完整單字)
 l | login <手機號/郵箱/用戶名> <密碼>\t\t\t--- 登錄歡樂書客帳號
 t | task\t\t\t\t\t\t--- 執行每日簽到，領代幣 (啟動時自動執行，無異常不需再次執行)
 s | shelf\t\t\t\t\t\t--- 刷新並顯示當前書架列表 (啟動時會自動刷新1次)
@@ -117,6 +124,12 @@ _SC = {
     'failed_get_book_info_id': "获取书籍信息失败, book_id:",
     'not_picked_book': "未选择书籍",
     'start_book_dl': "开始下载书籍...\n",
+    'app_update_info': "获取更新讯息 : \n",
+    'current_version_var': "目前版本号 : ",
+    'get_app_version_var': "获取版本号 : ",
+    'confirm_change_version_var': "是否使用\"获取版本号\"替换\"目前版本号\"\n确定:输入\"yes\", 取消:输入其他字符",
+    'confirm_msg': "确认",
+    'cancel_msg': "取消",
     # shelf
     'shelf_index': "书架编号:",
     'shelf_name': ", 书架名:",
@@ -159,6 +172,7 @@ _SC = {
 h | help\t\t\t\t\t\t--- 显示说明 (显示此讯息)
 m | message\t\t\t\t\t\t--- 切换提示讯息 (繁体/简体)
 q | quit\t\t\t\t\t\t--- 退出脚本
+version\t\t\t\t\t\t\t--- 从网路获取现在版本号，询问是否刷新版本号 (输入完整单字)
 l | login <手机号/邮箱/用户名> <密码>\t\t\t--- 登录欢乐书客帐号
 t | task\t\t\t\t\t\t--- 执行每日签到，领代币 (启动时自动执行，无异常不需再次执行)
 s | shelf\t\t\t\t\t\t--- 刷新并显示当前书架列表 (启动时会自动刷新1次)

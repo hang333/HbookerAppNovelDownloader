@@ -6,6 +6,8 @@ import msg
 import sys
 import re
 
+default_current_app_version = "2.7.039"
+
 
 def refresh_bookshelf_list():
     response = HbookerAPI.BookShelf.get_shelf_list()
@@ -255,8 +257,35 @@ def setup_config():
         Vars.cfg.data['max_concurrent_downloads'] = 32
         config_change = True
 
+    if type(Vars.cfg.data.get('current_app_version')) is not str:
+        Vars.cfg.data['current_app_version'] = default_current_app_version
+        config_change = True
+    HbookerAPI.common_params['app_version'] = Vars.cfg.data['current_app_version']
+
     if config_change:
         Vars.cfg.save()
+
+
+def get_app_update_version_info():
+    response = (HbookerAPI.CheckAppVersion.get_version())
+    if response.get('code') == '100000':
+        android_version = response.get('data').get('android_version')
+        print(msg.m('app_update_info') + str(response))
+        print(msg.m('current_version_var') + HbookerAPI.common_params['app_version'])
+        print(msg.m('get_app_version_var') + android_version)
+
+        print(msg.m('confirm_change_version_var'))
+        confirm = get('>').strip()
+        if confirm == 'yes':
+            print('confirm_msg')
+            HbookerAPI.common_params['app_version'] = android_version
+            Vars.cfg.data['current_app_version'] = android_version
+            Vars.cfg.save()
+        else:
+            print('cancel_msg')
+        print(msg.m('current_version_var') + HbookerAPI.common_params['app_version'])
+    else:
+        print("error response: " + str(response))
 
 
 def shell():
@@ -316,6 +345,8 @@ def shell():
             check_in_today()
         elif inputs[0].startswith('m'):
             shell_switch_message_charter_set()
+        elif inputs[0].startswith('version'):
+            get_app_update_version_info()
         else:
             print(msg.m('help_msg'))
         if loop is False:
@@ -324,7 +355,6 @@ def shell():
 
 
 if __name__ == "__main__":
-
     setup_config()
 
     agreed_read_readme()
