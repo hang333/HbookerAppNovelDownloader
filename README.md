@@ -43,6 +43,7 @@
   m | message						--- 切換提示訊息 (繁體/簡體)  
   q | quit						--- 退出腳本  
   l | login <手機號/郵箱/用戶名> <密碼>			--- 登錄歡樂書客帳號  
+  version							--- 從網路獲取現在版本號，詢問是否刷新版本號 (輸入完整單字)  
   	注:<用戶名>空格<密碼>，<用戶名>與<密碼>不能含有空格。  
   t | task						--- 執行每日簽到，領代幣 (啟動時自動執行，無異常不需再次執行)  
   s | shelf						--- 刷新並顯示當前書架列表 (啟動時會自動刷新1次)  
@@ -117,8 +118,8 @@
     * 注: 此方式執行的`簽到`成功後會立刻結束，不會獲取刷新書架。  
    * 若想要完全自動化，可使用Windows的工作排程器`task scheduler`或Unix的`cron job`等類似工具，設定`定時執行`執行。
   ###介面訊息繁/簡切換
-  * 可以切換提示訊息繁體/簡體，輸入  
-  ```m```
+  * 可以切換提示訊息繁體/簡體，  
+    輸入`m`  
   * **僅介面提示訊息**，與匯出的書籍無關  
   ###可更黨檔案保存位置  
   * 可以編輯`HbookerAppNovelDownloader - Config.json`檔案中的以下的"`./XXX/`"來改變檔案保存位置
@@ -126,9 +127,18 @@
     * 書籍備份匯出位置: "backup_dir": "`./Hbooker/`"  
     * 暫存檔案位置: "cache_dir": "`./Cache/`"  
   ### 可以選擇是否會在書籍匯出時生成備份  
-  * 可以編輯`HbookerAppNovelDownloader - Config.json`檔案中的以下的 "do_backup": `true`  
-    * 啟用 "do_backup": `true`  
-    * 停用 "do_backup": `false`  
+  * 可以編輯`HbookerAppNovelDownloader - Config.json`檔案中的以下的 `"do_backup":` `true`  
+    * 啟用`"do_backup":` `true`  
+    * 停用`"do_backup":` `false`
+  ###更新版本號功能
+  * 可以透過網路獲取目前版本號  
+    輸入`version`
+    * 獲取候群問使否刷新版本號
+      * 獲取輸入`yes`可確認，其他取消
+      * (目前對於版本號的作用有待觀察)
+    * 另外可手動改版本號  
+      編輯`HbookerAppNovelDownloader - Config.json`中的`"current_app_version":` "`2.7.039`"  
+      
 ## 與原版差異/改動
 * \+ **簽到功能(領代幣)，(自動簽到)**。
 * \+ **下載章節與獲取書籍目錄時使用多工，加快下載速度(取代原download)**，  
