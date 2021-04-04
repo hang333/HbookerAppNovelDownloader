@@ -73,22 +73,25 @@ class Chapter:
     @staticmethod
     def get_chapter_command(chapter_id):
         data = {'chapter_id': chapter_id}
-        return get('chapter/get_chapter_command', data)
+        return get(UrlConstants.GET_CHAPTER_COMMAND, data)
 
     @staticmethod
     def get_cpt_ifm(chapter_id, chapter_command):
         data = {'chapter_id': chapter_id, 'chapter_command': chapter_command}
-        return get('chapter/get_cpt_ifm', data)
+        return get(UrlConstants.GET_CPT_IFM, data)
 
 
 class CheckIn:
-
     @staticmethod
     def get_check_in_records():
-        response = get(UrlConstants.SIGN_RECORD, {})
-        return response
+        return get(UrlConstants.SIGN_RECORD, {})
 
     @staticmethod
     def do_check_in():
-        response = get(UrlConstants.SING_RECORD_TASK, {'task_type': 1})
-        return response
+        return get(UrlConstants.SING_RECORD_TASK, {'task_type': 1})
+
+
+class CheckAppVersion:
+    @staticmethod
+    def get_version():
+        return get(UrlConstants.MY_SETTING_UPDATE)

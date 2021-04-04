@@ -7,7 +7,6 @@ maxRetry = 10
 
 
 def get(url, params=None, retry=maxRetry, **kwargs):
-    # print("\t:get:" + str(url) + ' params:' + str(params) + ' kwargs' + str(kwargs))
     for count in range(retry):
         try:
             return str(requests.get(url, params=params, headers=headers, **kwargs).text)
@@ -21,7 +20,6 @@ def get(url, params=None, retry=maxRetry, **kwargs):
 
 
 def post(url, data=None, retry=maxRetry, **kwargs):
-    # print("\t:get:" + str(url) + ' date:' + str(data) + ' kwargs:' + str(kwargs))
     for count in range(retry):
         try:
             return str(requests.post(url, data, headers=headers, **kwargs).text)
