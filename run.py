@@ -254,7 +254,7 @@ def setup_config():
         config_change = True
 
     if type(Vars.cfg.data.get('max_concurrent_downloads')) is not int:
-        Vars.cfg.data['max_concurrent_downloads'] = 32
+        Vars.cfg.data['max_concurrent_downloads'] = 16
         config_change = True
 
     if type(Vars.cfg.data.get('current_app_version')) is not str:

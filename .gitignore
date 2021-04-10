@@ -101,6 +101,4 @@ ENV/
 .mypy_cache/
 
 .idea/
-Build deploy.py
-cheak_in_only.py
 HbookerAppNovelDownloader - Config.json

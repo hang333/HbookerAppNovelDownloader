@@ -244,13 +244,9 @@ class Book:
                 if response2['data']['chapter_info']['auth_access'] == '1':
                     content = HbookerAPI.CryptoUtil.decrypt(response2['data']['chapter_info']['txt_content'],
                                                             chapter_command).decode('utf-8')
-                    if content.find('\n') + 1 < len(content):
-                        content = content[content.find('\n') + 1:]
-                        if content[-1] == '\n':
-                            content = content[:-1]
-                        content = content.replace('\n', '</p>\r\n<p>')
-                    else:
-                        content = ''
+                    if content[-1] == '\n':
+                        content = content[:-1]
+                    content = content.replace('\n', '</p>\r\n<p>')
                     # 下載成功
                     author_say = response2['data']['chapter_info']['author_say'].replace('\r', '')
                     author_say = author_say.replace('\n', '</p>\r\n<p>')
