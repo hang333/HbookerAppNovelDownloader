@@ -233,7 +233,10 @@ class EpubFile:
             self.add_image(filename, _src)
             _data = _data.replace(_src, '../Images/' + filename)
             _data = re.sub(
-                f"(<img src=[\"\']\\.\\./Images/{filename}[\"\'] *alt=[\"\'][^\"^\']+[\"\'] *)(?!( ))(?!(/>))[/>]?",
+                f"(<img *src=[\"\']\\.\\./Images/{filename}[\"\'] *alt=[\"\'][^\"^\']+[\"\'] *)(?!( ))(?!(/>))[/>]?",
+                "\\1/>", _data)
+            _data = re.sub(
+                f"(<img *alt=[\"\'][^\"^\']+[\"\'] *src=[\"\']\\.\\./Images/{filename}[\"\'] *)(?!( ))(?!(/>))[/>]?",
                 "\\1/>", _data)
         with codecs.open(self.tempdir + '/OEBPS/Text/' + f_name + '.xhtml', 'w', 'utf-8') as _file:
             _file.write(_data)
