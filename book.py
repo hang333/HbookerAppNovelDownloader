@@ -221,6 +221,13 @@ class Book:
         if os.path.exists(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml'):
             if os.path.getsize(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml') == 0:
                 # 章節檔案大小為0 重新下載
+                if chapter_title == "该章节未审核通过":
+                    print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
+                          str(chapter_order).rjust(6, "0") + '-' + chapter_id + " 分辨屏蔽章節下載: 標題\n" +
+                          division_name + '：' + chapter_title + "\n" +
+                          str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
+                        len(self.chapter_list)), end=' ')
+                    return False
                 print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + "-" +
                       str(chapter_order).rjust(6, "0") + "-" + str(chapter_id) +
                       msg.m('dl_0_chap_re_dl') + division_name + '：' + chapter_title +
