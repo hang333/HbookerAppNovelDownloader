@@ -223,9 +223,10 @@ class EpubFile:
                                                text_to_html_element_escape(chapter_title) + '</title>') \
             .replace('${chapter_content}', '<h3>' + text_to_html_element_escape(chapter_title) + '</h3>\r\n' +
                      chapter_content)
-        for _img in re.findall(r'<img src="http.*?>', _data):
+        # 改動插圖連結辨識方式，以適應另一種連結的結構
+        for _img in re.findall(r'<img .*src="http.*?>', _data):
             _img = _img.replace('>', ' />')
-            _src = str_mid(_img, '<img src="', '"')
+            _src = str_mid(_img, 'src="', '"')
             if _src.rfind('/') == -1:
                 continue
             filename = _src[_src.rfind('/') + 1:]

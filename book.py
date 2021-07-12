@@ -247,6 +247,29 @@ class Book:
                     if content[-1] == '\n':
                         content = content[:-1]
                     content = content.replace('\n', '</p>\r\n<p>')
+                    if response2['data']['chapter_info']['chapter_title'] == "该章节未审核通过":
+                        # 分辨屏蔽章節下載 (2021/07/13) 快速修補
+                        print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
+                              str(chapter_order).rjust(6, "0") + '-' + chapter_id + " 分辨屏蔽章節下載: 標題\n" +
+                              division_name + '：' + chapter_title + "\n" +
+                              str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
+                            len(self.chapter_list)), end=' ')
+                        with codecs.open(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml', 'w', 'utf-8') as _file:
+                            pass
+                        print("分辨屏蔽章節下載: 標題")
+                        return False
+                    if content == "本章节内容未审核通过                                                                                                   ":
+                        # 分辨屏蔽章節下載 (2021/07/13) 快速修補
+                        print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
+                              str(chapter_order).rjust(6, "0") + '-' + chapter_id + " 分辨屏蔽章節下載: 內容\n" +
+                              division_name + '：' + chapter_title + "\n" +
+                              str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
+                            len(self.chapter_list)), end=' ')
+                        with codecs.open(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml', 'w', 'utf-8') as _file:
+                            pass
+                        print("分辨屏蔽章節下載: 內容")
+                        return False
+
                     # 下載成功
                     author_say = response2['data']['chapter_info']['author_say'].replace('\r', '')
                     author_say = author_say.replace('\n', '</p>\r\n<p>')

@@ -262,6 +262,14 @@ def setup_config():
         config_change = True
     HbookerAPI.common_params['app_version'] = Vars.cfg.data['current_app_version']
 
+    # if type(Vars.cfg.data.get('export_epub')) is not bool:
+    #     Vars.cfg.data['export_txt'] = True
+    #     config_change = True
+    #
+    # if type(Vars.cfg.data.get('export_txt')) is not bool:
+    #     Vars.cfg.data['export_txt'] = True
+    #     config_change = True
+
     if config_change:
         Vars.cfg.save()
 
