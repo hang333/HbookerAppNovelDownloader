@@ -175,9 +175,11 @@ class Book:
                 text_mod_time = os.path.getmtime(self.epub.tempdir + '/OEBPS/Text')
             else:
                 text_mod_time = 0
-            if os.path.exists(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name() + '/' + self.fix_illegal_book_name() + '.epub'):
+            if os.path.exists(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name() + '/' +
+                              self.fix_illegal_book_name() + '.epub'):
                 epub_mod_time = os.path.getmtime(
-                    Vars.cfg.data['output_dir'] + self.fix_illegal_book_name() + '/' + self.fix_illegal_book_name() + '.epub')
+                    Vars.cfg.data['output_dir'] + self.fix_illegal_book_name() + '/' + self.fix_illegal_book_name() +
+                    '.epub')
             else:
                 epub_mod_time = 0
             if text_mod_time >= epub_mod_time:
@@ -236,8 +238,15 @@ class Book:
             else:
                 # 章節已經下載過 跳過
                 self.add_process_finished_count()
-                print('\r' + str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
-                    len(self.chapter_list)), end=' ')
+                if chapter_title == "该章节未审核通过":
+                    print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + "-" +
+                          str(chapter_order).rjust(6, "0") + "-" + chapter_id +
+                          msg.m('dl_chap_block_c') + division_name + '：' + chapter_title + " : 分辨屏蔽章節下載: 標題 " +
+                          "\n" + str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " +
+                          str(len(self.chapter_list)), end=' ')
+                else:
+                    print('\r' + str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
+                        len(self.chapter_list)), end=' ')
                 self.get_chapter_catalog_mt_dl_lock.release()
                 return True
 
@@ -254,17 +263,7 @@ class Book:
                     if content[-1] == '\n':
                         content = content[:-1]
                     content = content.replace('\n', '</p>\r\n<p>')
-                    if response2['data']['chapter_info']['chapter_title'] == "该章节未审核通过":
-                        # 分辨屏蔽章節下載 (2021/07/13) 快速修補
-                        print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
-                              str(chapter_order).rjust(6, "0") + '-' + chapter_id + " 分辨屏蔽章節下載: 標題\n" +
-                              division_name + '：' + chapter_title + "\n" +
-                              str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
-                            len(self.chapter_list)), end=' ')
-                        with codecs.open(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml', 'w', 'utf-8') as _file:
-                            pass
-                        print("分辨屏蔽章節下載: 標題")
-                        return False
+
                     if content == "本章节内容未审核通过                                                                                                   ":
                         # 分辨屏蔽章節下載 (2021/07/13) 快速修補
                         print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
@@ -275,6 +274,17 @@ class Book:
                         with codecs.open(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml', 'w', 'utf-8') as _file:
                             pass
                         print("分辨屏蔽章節下載: 內容")
+                        return False
+                    if response2['data']['chapter_info']['chapter_title'] == "该章节未审核通过":
+                        # 分辨屏蔽章節下載 (2021/07/13) 快速修補
+                        print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
+                              str(chapter_order).rjust(6, "0") + '-' + chapter_id + " 分辨屏蔽章節下載: 標題\n" +
+                              division_name + '：' + chapter_title + "\n" +
+                              str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
+                            len(self.chapter_list)), end=' ')
+                        with codecs.open(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml', 'w', 'utf-8') as _file:
+                            pass
+                        print("分辨屏蔽章節下載: 標題")
                         return False
 
                     # 下載成功
