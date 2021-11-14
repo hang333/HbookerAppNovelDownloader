@@ -298,10 +298,10 @@ class EpubFile:
             backup_copy_add_suffix_if_exists_add_index(self._filepath, date)
             backup_copy_add_suffix_if_exists_add_index(os.path.splitext(self._filepath)[0] + '.txt', date)
 
-    def make_cover_text(self, book_name: str, author_name: str, book_description: str, update_time: str):
+    def make_cover_text(self, book_name: str, author_name: str, book_description: str, update_time: str, book_id: str):
         text = '<h1>' + text_to_html_element_escape(book_name) + '</h1>\r\n<h2>作者: ' + \
                text_to_html_element_escape(author_name) + '</h2>\r\n<h3>更新時間: ' + update_time + \
-            '</h3>\r\n<h3>簡介:</h3>\r\n<p>' + \
+               '</h3>\r\n<h3>Book ID: ' + book_id + '</h3>\r\n<h3>簡介:</h3>\r\n<p>' + \
             re.sub('\r\n', '</p>\r\n<p>', text_to_html_element_escape(book_description) + '</p>')
         text = re.sub('</body>\r\n</html>', text + '\r\n</body>\r\n</html>', self.cover_template)
         with codecs.open(self.tempdir + '/OEBPS/Text/cover.xhtml', 'w', 'utf-8') as _file:

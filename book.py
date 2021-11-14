@@ -187,7 +187,7 @@ class Book:
                 if not os.path.isdir(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name()):
                     os.makedirs(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name())
                 self.epub.make_cover_text(self.book_info['book_name'], self.book_info['author_name'],
-                                          self.book_info['description'], self.book_info['uptime'])
+                                          self.book_info['description'], self.book_info['uptime'], self.book_id)
                 self.epub.download_book_write_chapter(self.division_chapter_list)
                 # self.config.data['book_info'] = self.book_info
                 # self.config.data['division_chapter_list'] = self.division_chapter_list
@@ -202,7 +202,7 @@ class Book:
             if not os.path.isdir(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name()):
                 os.makedirs(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name())
             self.epub.make_cover_text(self.book_info['book_name'], self.book_info['author_name'],
-                                      self.book_info['description'], self.book_info['uptime'])
+                                      self.book_info['description'], self.book_info['uptime'], self.book_id)
             self.epub.download_book_write_chapter(self.division_chapter_list)
             # self.config.data['book_info'] = self.book_info
             # self.config.data['division_chapter_list'] = self.division_chapter_list
