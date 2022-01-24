@@ -91,6 +91,10 @@ def shell_select_books(inputs):
         if len(inputs) < 3:
             Vars.current_book.show_division_list()
             Vars.current_book.show_latest_chapter()
+        server_time = (datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(hours=8)).replace(tzinfo=None)
+        last_update_time = datetime.datetime.strptime(Vars.current_book.last_chapter_info['uptime'], '%Y-%m-%d %H:%M:%S')
+        up_ago_time = server_time - last_update_time
+        print('  last update ' + str(up_ago_time.days) + ' days ago')
     else:
         if Vars.current_book is not None:
             Vars.current_book.show_chapter_list_order_division()
@@ -285,12 +289,12 @@ def get_app_update_version_info():
         print(msg.m('confirm_change_version_var'))
         confirm = get('>').strip()
         if confirm == 'yes':
-            print('confirm_msg')
+            print(msg.m('confirm_msg'))
             HbookerAPI.common_params['app_version'] = android_version
             Vars.cfg.data['current_app_version'] = android_version
             Vars.cfg.save()
         else:
-            print('cancel_msg')
+            print(msg.m('cancel_msg'))
         print(msg.m('current_version_var') + HbookerAPI.common_params['app_version'])
     else:
         print("error response: " + str(response))

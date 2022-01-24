@@ -60,6 +60,7 @@ class Book:
     def get_chapter_catalog_get_thread(self, division):
         response = HbookerAPI.Book.get_chapter_update(division['division_id'])
         if response.get('code') == '100000':
+            # print(response)
             self.get_chapter_catalog_mt_dl_lock.acquire()
             self.chapter_list.extend(response['data']['chapter_list'])
             self.division_chapter_list[division['division_name']] = response['data']['chapter_list']
@@ -116,7 +117,7 @@ class Book:
                     # 處理屏蔽章節
                     self.process_finished_count += 1
                     f_name = division['division_index'].rjust(4, "0") + '-' + str(chapter_order).rjust(6, "0") + '-' + \
-                        chapter_info['chapter_id']
+                             chapter_info['chapter_id']
                     if os.path.exists(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml'):
                         if os.path.getsize(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml') == 0:
                             # self.add_download_finished_count()
@@ -187,7 +188,7 @@ class Book:
                 if not os.path.isdir(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name()):
                     os.makedirs(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name())
                 self.epub.make_cover_text(self.book_info['book_name'], self.book_info['author_name'],
-                                          self.book_info['description'], self.book_info['uptime'])
+                                          self.book_info['description'], self.book_info['uptime'], self.book_id)
                 self.epub.download_book_write_chapter(self.division_chapter_list)
                 # self.config.data['book_info'] = self.book_info
                 # self.config.data['division_chapter_list'] = self.division_chapter_list
@@ -202,7 +203,7 @@ class Book:
             if not os.path.isdir(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name()):
                 os.makedirs(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name())
             self.epub.make_cover_text(self.book_info['book_name'], self.book_info['author_name'],
-                                      self.book_info['description'], self.book_info['uptime'])
+                                      self.book_info['description'], self.book_info['uptime'], self.book_id)
             self.epub.download_book_write_chapter(self.division_chapter_list)
             # self.config.data['book_info'] = self.book_info
             # self.config.data['division_chapter_list'] = self.division_chapter_list
@@ -225,7 +226,7 @@ class Book:
                 # 章節檔案大小為0 重新下載
                 if chapter_title == "该章节未审核通过":
                     print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
-                          str(chapter_order).rjust(6, "0") + '-' + chapter_id + " 分辨屏蔽章節下載: 標題\n" +
+                          str(chapter_order).rjust(6, "0") + '-' + chapter_id + " 分辨屏蔽章節下載: 標題 #1 " +
                           division_name + '：' + chapter_title + "\n" +
                           str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
                         len(self.chapter_list)), end=' ')
@@ -241,8 +242,8 @@ class Book:
                 if chapter_title == "该章节未审核通过":
                     print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + "-" +
                           str(chapter_order).rjust(6, "0") + "-" + chapter_id +
-                          msg.m('dl_chap_block_c') + division_name + '：' + chapter_title + " : 分辨屏蔽章節下載: 標題 " +
-                          "\n" + str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " +
+                          msg.m('dl_chap_block_c') + division_name + '：' + chapter_title + " : 分辨屏蔽章節下載: 標題 #2" +
+                          str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " +
                           str(len(self.chapter_list)), end=' ')
                 else:
                     print('\r' + str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
@@ -264,34 +265,47 @@ class Book:
                         content = content[:-1]
                     content = content.replace('\n', '</p>\r\n<p>')
 
-                    if content == "本章节内容未审核通过                                                                                                   ":
+                    if content == "本章节内容未审核通过                                            "\
+                                  "                                                       ":
                         # 分辨屏蔽章節下載 (2021/07/13) 快速修補
                         print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
-                              str(chapter_order).rjust(6, "0") + '-' + chapter_id + " 分辨屏蔽章節下載: 內容\n" +
+                              str(chapter_order).rjust(6, "0") + '-' + chapter_id + " 分辨屏蔽章節下載: 內容 #3 " +
                               division_name + '：' + chapter_title + "\n" +
                               str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
                             len(self.chapter_list)), end=' ')
                         with codecs.open(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml', 'w', 'utf-8') as _file:
                             pass
-                        print("分辨屏蔽章節下載: 內容")
                         return False
-                    if response2['data']['chapter_info']['chapter_title'] == "该章节未审核通过":
+                    if response2['data']['chapter_info']['chapter_title'] == "该章节未审核通过#Ejxt" or \
+                            chapter_title == "该章节未审核通过":
                         # 分辨屏蔽章節下載 (2021/07/13) 快速修補
                         print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
-                              str(chapter_order).rjust(6, "0") + '-' + chapter_id + " 分辨屏蔽章節下載: 標題\n" +
+                              str(chapter_order).rjust(6, "0") + '-' + chapter_id + " 分辨屏蔽章節下載: 標題 #4 " +
                               division_name + '：' + chapter_title + "\n" +
                               str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " + str(
                             len(self.chapter_list)), end=' ')
                         with codecs.open(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml', 'w', 'utf-8') as _file:
                             pass
-                        print("分辨屏蔽章節下載: 標題")
+                        print("分辨屏蔽章節下載: 標題 #5")
                         return False
 
                     # 下載成功
                     author_say = response2['data']['chapter_info']['author_say'].replace('\r', '')
                     author_say = author_say.replace('\n', '</p>\r\n<p>')
+                    # version above 2.9.225 chapter_title from
+                    # self.division_chapter_list[division_name][chapter_order - 1]['chapter_title']
+                    # and
+                    # response2['data']['chapter_info']['chapter_title']
+                    # are different
+                    # response2['data']['chapter_info']['chapter_title'] has strang #[a-zA-Z0-9]{4} ending
+                    # print(chapter_title, response2['data']['chapter_info']['chapter_title'])
+                    if chapter_title is None or chapter_title == '':
+                        print("debug: self.division_chapter_list[division_name][chapter_order - 1]['chapter_title'] "
+                              "is None or blank")
+                        chapter_title = response2['data']['chapter_info']['chapter_title']
+                        # change fail safe, old method
                     self.epub.add_chapter(chapter_id, division_name,
-                                          response2['data']['chapter_info']['chapter_title'], '<p>' + content +
+                                          chapter_title, '<p>' + content +
                                           '</p>\r\n<p>' + author_say + '</p>', division_index, chapter_order)
                     self.add_process_finished_count()
                     self.downloaded_count += 1
