@@ -289,12 +289,12 @@ def get_app_update_version_info():
         print(msg.m('confirm_change_version_var'))
         confirm = get('>').strip()
         if confirm == 'yes':
-            print('confirm_msg')
+            print(msg.m('confirm_msg'))
             HbookerAPI.common_params['app_version'] = android_version
             Vars.cfg.data['current_app_version'] = android_version
             Vars.cfg.save()
         else:
-            print('cancel_msg')
+            print(msg.m('cancel_msg'))
         print(msg.m('current_version_var') + HbookerAPI.common_params['app_version'])
     else:
         print("error response: " + str(response))
