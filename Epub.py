@@ -61,6 +61,11 @@ def backup_copy_add_suffix_if_exists_add_index(file_path: str, suffix: str):
 
 
 def download_progress_reporthook(count, block_size, total_size):
+    # this prints the image downloading progress
+    # this is to show that the script is working
+    # the timer is "not thread" safe, but working as intended
+    # the timer is reset every time when a new download is triggered
+    # it will print the progress if it's taking too long
     global last_image_dl_start_time
     if count == 0:
         last_image_dl_start_time = time.time()
@@ -71,10 +76,6 @@ def download_progress_reporthook(count, block_size, total_size):
     progress_size = int(count * block_size)
     percent = int(progress_size * 100 / total_size)
     print("\rDownloading Image... %d%%, %d KB" % (percent, progress_size / 1024), end='')
-
-
-def image_download_progress(url, filename):
-    urllib.request.urlretrieve(url, filename, download_progress_reporthook)
 
 
 class EpubFile:
@@ -195,8 +196,7 @@ class EpubFile:
                 return
         for retry in range(image_get_retry):
             try:
-                # urllib.request.urlretrieve(url, image_path)
-                image_download_progress(url, image_path)
+                urllib.request.urlretrieve(url, image_path, download_progress_reporthook)
                 copyfile(image_path, self.tempdir + '/OEBPS/Images/cover.jpg')
                 return
             except OSError as e:
@@ -223,8 +223,7 @@ class EpubFile:
                 return
         for retry in range(image_get_retry):
             try:
-                # urllib.request.urlretrieve(url, image_path)
-                image_download_progress(url, image_path)
+                urllib.request.urlretrieve(url, image_path, download_progress_reporthook)
                 return
             except OSError as e:
                 if retry != image_get_retry - 1:
