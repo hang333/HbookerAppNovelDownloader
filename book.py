@@ -117,7 +117,7 @@ class Book:
                     # 處理屏蔽章節
                     self.process_finished_count += 1
                     f_name = division['division_index'].rjust(4, "0") + '-' + str(chapter_order).rjust(6, "0") + '-' + \
-                             chapter_info['chapter_id']
+                        chapter_info['chapter_id']
                     if os.path.exists(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml'):
                         if os.path.getsize(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml') == 0:
                             # self.add_download_finished_count()
@@ -265,7 +265,7 @@ class Book:
                         content = content[:-1]
                     content = content.replace('\n', '</p>\r\n<p>')
 
-                    if content == "本章节内容未审核通过                                            "\
+                    if content == "本章节内容未审核通过                                            " \
                                   "                                                       ":
                         # 分辨屏蔽章節下載 (2021/07/13)
                         print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + '-' +
@@ -296,7 +296,7 @@ class Book:
                     # and
                     # response2['data']['chapter_info']['chapter_title']
                     # are different
-                    # response2['data']['chapter_info']['chapter_title'] has strang #[a-zA-Z0-9]{4} ending
+                    # response2['data']['chapter_info']['chapter_title'] has string #[a-zA-Z0-9]{4} ending
                     # print(chapter_title, response2['data']['chapter_info']['chapter_title'])
                     if chapter_title is None or chapter_title == '':
                         print("debug: self.division_chapter_list[division_name][chapter_order - 1]['chapter_title'] "
