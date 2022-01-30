@@ -148,6 +148,7 @@ def check_in_today():
             or Vars.cfg.data.get('user_password') is None or Vars.cfg.data.get('user_password') == "":
         print(msg.m('not_login_pl_login'))
         return False
+    # {'code': '240001', 'tip': '注册超过24小时的用户才能签到哦~'}
     check_in_records = HbookerAPI.CheckIn.get_check_in_records()
     if check_in_records.get('code') == '100000':
         if check_in_today_do(check_in_records):
