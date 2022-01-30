@@ -91,8 +91,10 @@ def shell_select_books(inputs):
         if len(inputs) < 3:
             Vars.current_book.show_division_list()
             Vars.current_book.show_latest_chapter()
-        server_time = (datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(hours=8)).replace(tzinfo=None)
-        last_update_time = datetime.datetime.strptime(Vars.current_book.last_chapter_info['uptime'], '%Y-%m-%d %H:%M:%S')
+        server_time = (datetime.datetime.now(tz=datetime.timezone.utc) +
+                       datetime.timedelta(hours=8)).replace(tzinfo=None)
+        last_update_time = \
+            datetime.datetime.strptime(Vars.current_book.last_chapter_info['uptime'], '%Y-%m-%d %H:%M:%S')
         up_ago_time = server_time - last_update_time
         print('  last update ' + str(up_ago_time.days) + ' days ago')
     else:
@@ -156,6 +158,8 @@ def check_in_today():
             return False
     elif check_in_records.get('code') == '200001':
         # {'code': '200001', 'tip': '缺少登录必需参数'}
+        # {'code': '310002', 'tip': '此账户未实名认证，请先绑定手机'}
+        # {'code': '240001', 'tip': '注册超过24小时的用户才能签到哦~'}
         print(msg.m('not_login_pl_login'))
         return False
     elif check_in_records.get('code') == '200100':
@@ -306,10 +310,11 @@ def shell():
         if len(sys.argv) > 1:
             if str(sys.argv[1]).startswith('t'):
                 if check_in_today():
-                    sys.exit()
+                    sys.exit(0)
                 else:
-                    loop = True
-                    inputs = []
+                    sys.exit(-5)
+                    # loop = True
+                    # inputs = ['']
             else:
                 check_in_today()
                 loop = False
