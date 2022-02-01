@@ -310,9 +310,9 @@ def shell():
         if len(sys.argv) > 1:
             if str(sys.argv[1]).startswith('t'):
                 if check_in_today():
-                    sys.exit(0)
+                    sys.exit()
                 else:
-                    sys.exit(-5)
+                    sys.exit(5)
                     # loop = True
                     # inputs = ['']
             else:
