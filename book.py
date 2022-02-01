@@ -122,7 +122,7 @@ class Book:
                     # 處理屏蔽章節
                     self.process_finished_count += 1
                     f_name = division['division_index'].rjust(4, "0") + '-' + str(chapter_order).rjust(6, "0") + '-' + \
-                             chapter_info['chapter_id']
+                        chapter_info['chapter_id']
                     if os.path.exists(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml'):
                         if os.path.getsize(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml') == 0:
                             # self.add_download_finished_count()
@@ -198,7 +198,7 @@ class Book:
                 # self.config.data['book_info'] = self.book_info
                 # self.config.data['division_chapter_list'] = self.division_chapter_list
                 # self.config.save()
-                print(msg.m('expo_e'))
+                print('\r' + msg.m('expo_e'))
             else:
                 print(msg.m('expo_no'))
         else:
@@ -213,7 +213,7 @@ class Book:
             # self.config.data['book_info'] = self.book_info
             # self.config.data['division_chapter_list'] = self.division_chapter_list
             # self.config.save()
-            print(msg.m('expo_e'))
+            print('\r' + msg.m('expo_e'))
         self.process_finished_count = 0
         self.downloaded_count = 0
 
