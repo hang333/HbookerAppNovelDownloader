@@ -58,7 +58,10 @@ class Book:
                   msg.m('show_div_name') + division['division_name'])
 
     def get_chapter_catalog_get_thread(self, division):
+        q_item = self.concurrent_download_queue.get()
+        print('s' + str(division['division_index']), end=',')  # debug
         response = HbookerAPI.Book.get_chapter_update(division['division_id'])
+        self.concurrent_download_queue.put(q_item)
         if response.get('code') == '100000':
             # print(response)
             self.get_chapter_catalog_mt_dl_lock.acquire()
@@ -66,7 +69,8 @@ class Book:
             self.division_chapter_list[division['division_name']] = response['data']['chapter_list']
             self.get_chapter_catalog_mt_dl_lock.release()
         else:
-            print(msg.m('failed_get_chap') + division['division_name'] + ": " + str(response))
+            print(msg.m('failed_get_chap') + division['division_name'] + ": " + str(response) + '\n')
+        print('d' + str(division['division_index']), end=',')  # debug
 
     def get_chapter_catalog(self):
         print(msg.m('get_chap'))
@@ -79,6 +83,7 @@ class Book:
         for get_thread in download_threads:
             get_thread.join()
         self.chapter_list.sort(key=lambda x: int(x['chapter_index']))
+        print()  # debug
         print("\r", end="")
 
     def show_latest_chapter(self):
@@ -117,7 +122,7 @@ class Book:
                     # 處理屏蔽章節
                     self.process_finished_count += 1
                     f_name = division['division_index'].rjust(4, "0") + '-' + str(chapter_order).rjust(6, "0") + '-' + \
-                        chapter_info['chapter_id']
+                             chapter_info['chapter_id']
                     if os.path.exists(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml'):
                         if os.path.getsize(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml') == 0:
                             # self.add_download_finished_count()
