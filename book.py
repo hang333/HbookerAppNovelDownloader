@@ -69,7 +69,7 @@ class Book:
             print(msg.m('failed_get_chap') + division['division_name'] + ": " + str(response))
 
     def get_chapter_catalog(self):
-        print('正在獲取書籍目錄...')
+        print(msg.m('get_chap'))
         self.chapter_list.clear()
         download_threads = []
         for division in self.division_list:
