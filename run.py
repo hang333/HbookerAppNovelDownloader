@@ -194,9 +194,10 @@ def check_in_today_do(check_in_records):
             if record['is_signed'] == '0':
                 check_in = HbookerAPI.CheckIn.do_check_in()
                 if check_in.get('code') == '100000':
-                    print(msg.m('check_in_success_got') + str(check_in['data']['bonus']['exp']) + msg.m('check_in_xp') +
-                          str(check_in['data']['bonus']['hlb']) + msg.m('check_in_token') +
-                          str(check_in['data']['bonus']['recommend']) + msg.m('check_in_recommend'))
+                    print('debug : check\n' + str(check_in))  # debug
+                    # print(msg.m('check_in_success_got') + str(check_in['data']['bonus']['exp']) + msg.m('check_in_xp') +
+                    #       str(check_in['data']['bonus']['hlb']) + msg.m('check_in_token') +
+                    #       str(check_in['data']['bonus']['recommend']) + msg.m('check_in_recommend'))
                     return True
                 elif check_in.get('code') == '340001':
                     print(msg.m('check_in_no_redo'))
