@@ -194,12 +194,12 @@ def check_in_today_do(check_in_records):
             if record['is_signed'] == '0':
                 check_in = HbookerAPI.CheckIn.do_check_in()
                 if check_in.get('code') == '100000':
-                    get_exp = str(check_in.get('data').get('bonus').get('exp', 0))
-                    get_hlb = str(check_in.get('data').get('bonus').get('hlb', 0))
-                    get_recommend = str(check_in.get('data').get('bonus').get('recommend', 0))
-                    print(msg.m('check_in_success_got') + get_exp + msg.m('check_in_xp') +
-                          get_hlb + msg.m('check_in_token') + get_recommend + msg.m('check_in_recommend'))
-                    if get_exp == '0' or get_hlb == '0' or get_recommend == '0':
+                    check_in_exp = check_in.get('data').get('bonus').get('exp')
+                    check_in_hlb = check_in.get('data').get('bonus').get('hlb')
+                    check_in_recommend = check_in.get('data').get('bonus').get('recommend')
+                    print(msg.m('check_in_success_got') + str(check_in_exp) + msg.m('check_in_xp') + str(check_in_hlb)
+                          + msg.m('check_in_token') + str(check_in_recommend) + msg.m('check_in_recommend'))
+                    if check_in_exp is None or check_in_hlb is None or check_in_recommend is None:
                         print('debug : check\n' + str(check_in))  # debug
                     return True
                 elif check_in.get('code') == '340001':
