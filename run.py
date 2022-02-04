@@ -77,12 +77,16 @@ def shell_select_books(inputs):
                     print(msg.m('failed_get_book_info_index'), inputs[1])
                     return
         if Vars.current_book is None:
-            response = HbookerAPI.Book.get_info_by_id(inputs[1])
-            if response.get('code') == '100000':
-                # print(response['data']['book_info'])
-                Vars.current_book = Book(None, response['data']['book_info'])
+            if re.match('^[0-9]{9,}$', inputs[1]):
+                response = HbookerAPI.Book.get_info_by_id(inputs[1])
+                if response.get('code') == '100000':
+                    # print(response['data']['book_info'])
+                    Vars.current_book = Book(None, response['data']['book_info'])
+                else:
+                    print(msg.m('failed_get_book_info_id'), inputs[1])
+                    return
             else:
-                print(msg.m('failed_get_book_info_id'), inputs[1])
+                print('input', inputs[1], 'not a book ID, ID should be a 9 digit number')
                 return
 
         print('《' + Vars.current_book.book_name + '》')
