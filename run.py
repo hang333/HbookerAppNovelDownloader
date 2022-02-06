@@ -194,7 +194,8 @@ def check_in_today():
 def check_in_today_do(check_in_records):
     # UTC+8
     server_time = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(hours=8)
-    print(str(server_time.date()) + " " + str(server_time.hour) + ":" + str(server_time.minute))
+    print(str(server_time.date()) + " " + str(server_time.hour).rjust(2, '0') + ":"
+          + str(server_time.minute).rjust(2, '0'))
     today = str(server_time.date())
     for record in check_in_records['data']['sign_record_list']:
         if record['date'] == today:
