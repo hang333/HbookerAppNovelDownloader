@@ -11,14 +11,13 @@ def get(url, params=None, retry=maxRetry, **kwargs):
         try:
             return str(requests.get(url, params=params, headers=headers, **kwargs).text)
         except (OSError, TimeoutError, IOError, requests.exceptions.Timeout) as e:
-            if retry != retry - 1:
-                print("\nGet Error Retry: " + str(e) + '\n' + url)
-                time.sleep(1 * count)
-            else:
-                print("\nGet Failed: " + str(e) + '\n' + url + "\nTerminating......")
-                sys.exit(1)
+            print("\nGet Error Retry: " + str(e) + '\n' + url)
+            time.sleep(1 * count)
         except Exception as e:
-            print(e)
+            print(repr(e))
+            sys.exit(1)
+    print("\nGet Failed, Terminating......")
+    sys.exit(1)
 
 
 def post(url, data=None, retry=maxRetry, **kwargs):
@@ -26,11 +25,10 @@ def post(url, data=None, retry=maxRetry, **kwargs):
         try:
             return str(requests.post(url, data, headers=headers, **kwargs).text)
         except (OSError, TimeoutError, IOError, requests.exceptions.Timeout) as e:
-            if retry != retry - 1:
-                print("\nGet Error Retry: " + str(e) + '\n' + url)
-                time.sleep(1 * count)
-            else:
-                print("\nPost Failed: " + str(e) + '\n' + url + "\nTerminating......")
-                sys.exit(1)
+            print("\nGet Error Retry: " + str(e) + '\n' + url)
+            time.sleep(1 * count)
         except Exception as e:
-            print(e)
+            print(repr(e))
+            sys.exit(1)
+    print("\nPost Failed, Terminating......")
+    sys.exit(1)
