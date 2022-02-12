@@ -59,7 +59,6 @@ class Book:
 
     def get_chapter_catalog_get_thread(self, division):
         q_item = self.concurrent_download_queue.get()
-        print('s' + str(division['division_index']), end=',')  # debug
         response = HbookerAPI.Book.get_chapter_update(division['division_id'])
         self.concurrent_download_queue.put(q_item)
         if response.get('code') == '100000':
@@ -70,7 +69,6 @@ class Book:
             self.get_chapter_catalog_mt_dl_lock.release()
         else:
             print(msg.m('failed_get_chap') + division['division_name'] + ": " + str(response) + '\n')
-        print('d' + str(division['division_index']), end=',')  # debug
 
     def get_chapter_catalog(self):
         print(msg.m('get_chap'))
@@ -83,7 +81,6 @@ class Book:
         for get_thread in download_threads:
             get_thread.join()
         self.chapter_list.sort(key=lambda x: int(x['chapter_index']))
-        print()  # debug
         print("\r", end="")
 
     def show_latest_chapter(self):

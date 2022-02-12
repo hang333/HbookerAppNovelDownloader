@@ -90,11 +90,8 @@ def shell_select_books(inputs):
                 return
 
         print('《' + Vars.current_book.book_name + '》')
-        print('debug 0-1 ')
         Vars.current_book.get_division_list()
-        print('debug 0-2 ')
         Vars.current_book.get_chapter_catalog()
-        print('debug 0-3 ')
         if len(inputs) < 3:
             Vars.current_book.show_division_list()
             Vars.current_book.show_latest_chapter()
