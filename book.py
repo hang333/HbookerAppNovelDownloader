@@ -58,7 +58,9 @@ class Book:
                   msg.m('show_div_name') + division['division_name'])
 
     def get_chapter_catalog_get_thread(self, division):
+        q_item = self.concurrent_download_queue.get()
         response = HbookerAPI.Book.get_chapter_update(division['division_id'])
+        self.concurrent_download_queue.put(q_item)
         if response.get('code') == '100000':
             # print(response)
             self.get_chapter_catalog_mt_dl_lock.acquire()
@@ -66,10 +68,10 @@ class Book:
             self.division_chapter_list[division['division_name']] = response['data']['chapter_list']
             self.get_chapter_catalog_mt_dl_lock.release()
         else:
-            print(msg.m('failed_get_chap') + division['division_name'] + ": " + str(response))
+            print(msg.m('failed_get_chap') + division['division_name'] + ": " + str(response) + '\n')
 
     def get_chapter_catalog(self):
-        print('正在獲取書籍目錄...')
+        print(msg.m('get_chap'))
         self.chapter_list.clear()
         download_threads = []
         for division in self.division_list:
@@ -193,7 +195,7 @@ class Book:
                 # self.config.data['book_info'] = self.book_info
                 # self.config.data['division_chapter_list'] = self.division_chapter_list
                 # self.config.save()
-                print(msg.m('expo_e'))
+                print('\r' + msg.m('expo_e'))
             else:
                 print(msg.m('expo_no'))
         else:
@@ -208,7 +210,7 @@ class Book:
             # self.config.data['book_info'] = self.book_info
             # self.config.data['division_chapter_list'] = self.division_chapter_list
             # self.config.save()
-            print(msg.m('expo_e'))
+            print('\r' + msg.m('expo_e'))
         self.process_finished_count = 0
         self.downloaded_count = 0
 

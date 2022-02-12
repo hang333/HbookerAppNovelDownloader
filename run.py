@@ -77,12 +77,16 @@ def shell_select_books(inputs):
                     print(msg.m('failed_get_book_info_index'), inputs[1])
                     return
         if Vars.current_book is None:
-            response = HbookerAPI.Book.get_info_by_id(inputs[1])
-            if response.get('code') == '100000':
-                # print(response['data']['book_info'])
-                Vars.current_book = Book(None, response['data']['book_info'])
+            if re.match('^[0-9]{9,}$', inputs[1]):
+                response = HbookerAPI.Book.get_info_by_id(inputs[1])
+                if response.get('code') == '100000':
+                    # print(response['data']['book_info'])
+                    Vars.current_book = Book(None, response['data']['book_info'])
+                else:
+                    print(msg.m('failed_get_book_info_id'), inputs[1])
+                    return
             else:
-                print(msg.m('failed_get_book_info_id'), inputs[1])
+                print('input', inputs[1], 'not a book ID, ID should be a 9 digit number')
                 return
 
         print('《' + Vars.current_book.book_name + '》')
@@ -187,16 +191,21 @@ def check_in_today():
 def check_in_today_do(check_in_records):
     # UTC+8
     server_time = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(hours=8)
-    print(str(server_time.date()) + " " + str(server_time.hour) + ":" + str(server_time.minute))
+    print(str(server_time.date()) + " " + str(server_time.hour).rjust(2, '0') + ":"
+          + str(server_time.minute).rjust(2, '0'))
     today = str(server_time.date())
     for record in check_in_records['data']['sign_record_list']:
         if record['date'] == today:
             if record['is_signed'] == '0':
                 check_in = HbookerAPI.CheckIn.do_check_in()
                 if check_in.get('code') == '100000':
-                    print(msg.m('check_in_success_got') + str(check_in['data']['bonus']['exp']) + msg.m('check_in_xp') +
-                          str(check_in['data']['bonus']['hlb']) + msg.m('check_in_token') +
-                          str(check_in['data']['bonus']['recommend']) + msg.m('check_in_recommend'))
+                    check_in_exp = check_in.get('data').get('bonus').get('exp')
+                    check_in_hlb = check_in.get('data').get('bonus').get('hlb')
+                    check_in_recommend = check_in.get('data').get('bonus').get('recommend')
+                    print(msg.m('check_in_success_got') + str(check_in_exp) + msg.m('check_in_xp') + str(check_in_hlb)
+                          + msg.m('check_in_token') + str(check_in_recommend) + msg.m('check_in_recommend'))
+                    if check_in_exp is None or check_in_hlb is None or check_in_recommend is None:
+                        print('debug : check\n' + str(check_in))  # debug
                     return True
                 elif check_in.get('code') == '340001':
                     print(msg.m('check_in_no_redo'))
@@ -261,8 +270,9 @@ def setup_config():
         Vars.cfg.data['backup_dir'] = "./Hbooker/"
         config_change = True
 
-    if type(Vars.cfg.data.get('max_concurrent_downloads')) is not int:
-        Vars.cfg.data['max_concurrent_downloads'] = 16
+    if type(Vars.cfg.data.get('max_concurrent_downloads')) is not int or \
+            Vars.cfg.data.get('max_concurrent_downloads') < 1:
+        Vars.cfg.data['max_concurrent_downloads'] = 8
         config_change = True
 
     if type(Vars.cfg.data.get('current_app_version')) is not str:
@@ -310,9 +320,9 @@ def shell():
         if len(sys.argv) > 1:
             if str(sys.argv[1]).startswith('t'):
                 if check_in_today():
-                    sys.exit(0)
+                    sys.exit()
                 else:
-                    sys.exit(-5)
+                    sys.exit(5)
                     # loop = True
                     # inputs = ['']
             else:
