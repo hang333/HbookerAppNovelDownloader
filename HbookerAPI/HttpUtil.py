@@ -4,7 +4,7 @@ import sys
 
 headers = {'User-Agent': 'Android'}
 maxRetry = 10
-requests_timeout = 10
+requests_timeout = 20
 
 
 def get(url, params=None, retry=maxRetry, **kwargs):
