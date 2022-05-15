@@ -42,19 +42,21 @@ def html_element_to_text_unescape(element: str):
 
 
 def backup_copy_add_suffix_if_exists_add_index(file_path: str, suffix: str):
-    backup_dir = Vars.cfg.data['backup_dir'] + os.path.splitext(os.path.basename(file_path))[0]
+    # fix_illegal_book_name_dir
+    backup_dir = os.path.join(Vars.cfg.data['backup_dir'], re.sub('^(.+)\\.\\s*$', '\\1．',
+                                                                  os.path.splitext(os.path.basename(file_path))[0]))
     file_basename = os.path.splitext(os.path.basename(file_path))[0] + ' ' + suffix
     file_ext = os.path.splitext(file_path)[1]
     if not os.path.isdir(backup_dir):
         os.makedirs(backup_dir)
     if os.path.exists(file_path):
-        if os.path.exists(backup_dir + '/' + file_basename + file_ext):
+        if os.path.exists(os.path.join(backup_dir, file_basename) + file_ext):
             index = 1
-            while os.path.exists(backup_dir + '/' + file_basename + ' ' + str(index) + file_ext):
+            while os.path.exists(os.path.join(backup_dir, file_basename) + ' ' + str(index) + file_ext):
                 index += 1
-            copyfile(file_path, backup_dir + '/' + file_basename + ' ' + str(index) + file_ext)
+            copyfile(file_path, os.path.join(backup_dir, file_basename) + ' ' + str(index) + file_ext)
         else:
-            copyfile(file_path, backup_dir + '/' + file_basename + file_ext)
+            copyfile(file_path, os.path.join(backup_dir, file_basename) + file_ext)
     else:
         # 出現錯誤
         print("error: file dose not exists: " + file_path)
