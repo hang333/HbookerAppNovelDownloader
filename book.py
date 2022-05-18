@@ -88,8 +88,16 @@ class Book:
               self.last_chapter_info['uptime'], msg.m('show_last_chap_name'), self.chapter_list[-1]['chapter_title'])
 
     def fix_illegal_book_name(self):
+        # replace illegal characters with full with counterparts
         return self.book_name.replace('<', '＜').replace('>', '＞').replace(':', '：').replace('"', '“') \
             .replace('/', '╱').replace('|', '｜').replace('?', '？').replace('*', '＊')
+
+    def fix_illegal_book_name_dir(self):
+        # remove spaces at the end
+        # if last character is '.' replace with full width '．'
+        # replace illegal characters with full with counterparts
+        return re.sub('^(.+)\\.\\s*$', '\\1．', self.book_name).replace('<', '＜').replace('>', '＞').replace(':', '：')\
+            .replace('"', '“').replace('/', '╱').replace('|', '｜').replace('?', '？').replace('*', '＊')
 
     def show_chapter_list_order_division(self):
         for division in self.division_list:
@@ -102,11 +110,10 @@ class Book:
                 chapter_order += 1
 
     def download_book_multi_thread(self):
-        self.file_path = Vars.cfg.data['output_dir'] + self.fix_illegal_book_name() + '/' + \
-                         self.fix_illegal_book_name() + '.epub '
-        self.epub = EpubFile(self.file_path, Vars.cfg.data['cache_dir'] + self.fix_illegal_book_name(), self.book_id,
-                             self.book_name,
-                             self.author_name, use_old_epub=False)
+        self.file_path = os.path.join(Vars.cfg.data['output_dir'], self.fix_illegal_book_name_dir(),
+                                      self.fix_illegal_book_name()) + '.epub'
+        self.epub = EpubFile(self.file_path, os.path.join(Vars.cfg.data['cache_dir'], self.fix_illegal_book_name_dir()),
+                             self.book_id, self.book_name, self.author_name, use_old_epub=False)
         self.epub.set_cover(self.cover)
         threads = []
         # for every chapter in order of division
@@ -178,17 +185,17 @@ class Book:
                 text_mod_time = os.path.getmtime(self.epub.tempdir + '/OEBPS/Text')
             else:
                 text_mod_time = 0
-            if os.path.exists(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name() + '/' +
-                              self.fix_illegal_book_name() + '.epub'):
+            if os.path.exists(os.path.join(Vars.cfg.data['output_dir'], self.fix_illegal_book_name_dir(),
+                                           self.fix_illegal_book_name()) + '.epub'):
                 epub_mod_time = os.path.getmtime(
-                    Vars.cfg.data['output_dir'] + self.fix_illegal_book_name() + '/' + self.fix_illegal_book_name() +
-                    '.epub')
+                    os.path.join(Vars.cfg.data['output_dir'], self.fix_illegal_book_name_dir(),
+                                 self.fix_illegal_book_name()) + '.epub')
             else:
                 epub_mod_time = 0
             if text_mod_time >= epub_mod_time:
                 print(msg.m('expo_s'), end='')
-                if not os.path.isdir(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name()):
-                    os.makedirs(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name())
+                if not os.path.isdir(os.path.join(Vars.cfg.data['output_dir'], self.fix_illegal_book_name_dir())):
+                    os.makedirs(os.path.join(Vars.cfg.data['output_dir'], self.fix_illegal_book_name_dir()))
                 self.epub.make_cover_text(self.book_info['book_name'], self.book_info['author_name'],
                                           self.book_info['description'], self.book_info['uptime'], self.book_id)
                 self.epub.download_book_write_chapter(self.division_chapter_list)
@@ -202,8 +209,8 @@ class Book:
             print(msg.m('expo_s'), end='')
             if not os.path.isdir(Vars.cfg.data['output_dir']):
                 os.makedirs(Vars.cfg.data['output_dir'])
-            if not os.path.isdir(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name()):
-                os.makedirs(Vars.cfg.data['output_dir'] + self.fix_illegal_book_name())
+            if not os.path.isdir(os.path.join(Vars.cfg.data['output_dir'], self.fix_illegal_book_name_dir())):
+                os.makedirs(os.path.join(Vars.cfg.data['output_dir'], self.fix_illegal_book_name_dir()))
             self.epub.make_cover_text(self.book_info['book_name'], self.book_info['author_name'],
                                       self.book_info['description'], self.book_info['uptime'], self.book_id)
             self.epub.download_book_write_chapter(self.division_chapter_list)
