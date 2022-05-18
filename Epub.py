@@ -216,10 +216,12 @@ class EpubFile:
         with zipfile.ZipFile(self._filepath, 'w', zipfile.ZIP_DEFLATED) as _file:
             _result = get_all_files(self.tempdir)
             counter = 0
+            print()
             for _name in _result:
                 _file.write(_name, _name.replace(self.tempdir + '/', ''))
                 counter += 1
                 print('\r' + str(counter) + ' / ' + str(len(_result)), end='')
+            print()
 
     def add_image(self, filename: str, url: str):
         image_path = self.tempdir + '/OEBPS/Images/' + filename
