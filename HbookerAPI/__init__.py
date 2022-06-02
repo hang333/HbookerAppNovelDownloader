@@ -14,11 +14,10 @@ def get(api_url, params=None, **kwargs):
     if params is not None:
         params.update(common_params)
     api_url = api_url.replace(UrlConstants.WEB_SITE, '')
-    ret = json.loads(CryptoUtil.decrypt(HttpUtil.get(UrlConstants.WEB_SITE + api_url, params=params, **kwargs)))
-    # print('GET', api_url)
-    # print(params)
-    # print(ret)
-    return ret
+    try:
+        return json.loads(CryptoUtil.decrypt(HttpUtil.get(UrlConstants.WEB_SITE + api_url, params=params, **kwargs)))
+    except Exception as error:
+        print("post error:", error)
 
 
 def post(api_url, data=None, **kwargs):
@@ -27,11 +26,10 @@ def post(api_url, data=None, **kwargs):
     if data is not None:
         data.update(common_params)
     api_url = api_url.replace(UrlConstants.WEB_SITE, '')
-    ret = json.loads(CryptoUtil.decrypt(HttpUtil.post(UrlConstants.WEB_SITE + api_url, data=data, **kwargs)))
-    # print('POST', api_url)
-    # print(data)
-    # print(ret)
-    return ret
+    try:
+        return json.loads(CryptoUtil.decrypt(HttpUtil.post(UrlConstants.WEB_SITE + api_url, data=data, **kwargs)))
+    except Exception as error:
+        print("post error:", error)
 
 
 class SignUp:
@@ -57,6 +55,10 @@ class Book:
     def get_division_list(book_id):
         data = {'book_id': book_id}
         return get(UrlConstants.GET_DIVISION_LIST, data)
+
+    @staticmethod
+    def get_updated_chapter_by_division_new(book_id: str):
+        return get(UrlConstants.GET_DIVISION_LIST_NEW, {'book_id': book_id})
 
     @staticmethod
     def get_chapter_update(division_id, last_update_time='0'):
