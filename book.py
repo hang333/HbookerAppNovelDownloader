@@ -44,43 +44,25 @@ class Book:
 
     def get_division_list(self):
         print(msg.m('get_div'), end='')
-        response = HbookerAPI.Book.get_division_list(self.book_id)
+        response = HbookerAPI.Book.get_updated_chapter_by_division_new(self.book_id)
         if response.get('code') == '100000':
-            self.division_list = response['data']['division_list']
+            self.division_list = response['data']['chapter_list']
         else:
             print(msg.m('failed_get_div') + str(response))
 
     def show_division_list(self):
         print('\r', end='')
-        for division in self.division_list:
-            print(msg.m('show_div_index') + division['division_index'].rjust(3, " ") + msg.m('show_div_total') +
-                  str(len(self.division_chapter_list[division['division_name']])).rjust(4, " ") +
-                  msg.m('show_div_name') + division['division_name'])
-
-    def get_chapter_catalog_get_thread(self, division):
-        q_item = self.concurrent_download_queue.get()
-        response = HbookerAPI.Book.get_chapter_update(division['division_id'])
-        self.concurrent_download_queue.put(q_item)
-        if response.get('code') == '100000':
-            # print(response)
-            self.get_chapter_catalog_mt_dl_lock.acquire()
-            self.chapter_list.extend(response['data']['chapter_list'])
-            self.division_chapter_list[division['division_name']] = response['data']['chapter_list']
-            self.get_chapter_catalog_mt_dl_lock.release()
-        else:
-            print(msg.m('failed_get_chap') + division['division_name'] + ": " + str(response) + '\n')
+        for chapter_list in self.division_list:
+            print(msg.m('show_div_index') + chapter_list['division_index'].rjust(3, " ") + msg.m('show_div_total') +
+                  str(len(self.division_chapter_list[chapter_list['division_name']])).rjust(4, " ") +
+                  msg.m('show_div_name') + chapter_list['division_name'])
 
     def get_chapter_catalog(self):
         print(msg.m('get_chap'))
         self.chapter_list.clear()
-        download_threads = []
-        for division in self.division_list:
-            get_thread = threading.Thread(target=self.get_chapter_catalog_get_thread, args=(division,))
-            download_threads.append(get_thread)
-            get_thread.start()
-        for get_thread in download_threads:
-            get_thread.join()
-        self.chapter_list.sort(key=lambda x: int(x['chapter_index']))
+        for chapter_list in self.division_list:
+            self.chapter_list.extend(chapter_list['chapter_list'])
+            self.division_chapter_list[chapter_list['division_name']] = chapter_list['chapter_list']
         print("\r", end="")
 
     def show_latest_chapter(self):
@@ -88,15 +70,15 @@ class Book:
               self.last_chapter_info['uptime'], msg.m('show_last_chap_name'), self.chapter_list[-1]['chapter_title'])
 
     def fix_illegal_book_name(self):
-        # replace illegal characters with full with counterparts
+        # replace illegal characters with full of counterparts
         return self.book_name.replace('<', '＜').replace('>', '＞').replace(':', '：').replace('"', '“') \
             .replace('/', '╱').replace('|', '｜').replace('?', '？').replace('*', '＊')
 
     def fix_illegal_book_name_dir(self):
         # remove spaces at the end
         # if last character is '.' replace with full width '．'
-        # replace illegal characters with full with counterparts
-        return re.sub('^(.+)\\.\\s*$', '\\1．', self.book_name).replace('<', '＜').replace('>', '＞').replace(':', '：')\
+        # replace illegal characters with full of counterparts
+        return re.sub('^(.+)\\.\\s*$', '\\1．', self.book_name).replace('<', '＜').replace('>', '＞').replace(':', '：') \
             .replace('"', '“').replace('/', '╱').replace('|', '｜').replace('?', '？').replace('*', '＊')
 
     def show_chapter_list_order_division(self):
@@ -126,7 +108,7 @@ class Book:
                     # 處理屏蔽章節
                     self.process_finished_count += 1
                     f_name = division['division_index'].rjust(4, "0") + '-' + str(chapter_order).rjust(6, "0") + '-' + \
-                        chapter_info['chapter_id']
+                             chapter_info['chapter_id']
                     if os.path.exists(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml'):
                         if os.path.getsize(self.epub.tempdir + '/OEBPS/Text/' + f_name + '.xhtml') == 0:
                             # self.add_download_finished_count()
