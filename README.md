@@ -42,7 +42,8 @@
   h | help						--- 顯示說明 (此訊息)  
   m | message						--- 切換提示訊息 (繁體/簡體)  
   q | quit						--- 退出腳本  
-  l | login <手機號/郵箱/用戶名> <密碼>			--- 登錄歡樂書客帳號  
+  i | import_token					--- 以匯入token方式登入帳號
+  l | login <手機號/郵箱/用戶名> <密碼>			--- 登錄歡樂書客帳號 ！！！已失效！！！
   version							--- 從網路獲取現在版本號，詢問是否刷新版本號 (輸入完整單字)  
   	注:<用戶名>空格<密碼>，<用戶名>與<密碼>不能含有空格。  
   t | task						--- 執行每日簽到，領代幣 (啟動時自動執行，無異常不需再次執行)  
@@ -59,31 +60,61 @@
 
   注: 輸入指令開頭字母即可  
 ## 基本使用流程  
-* 首先執行  
-  `py run.py`  
-  確認仔細閱讀且同意README.md中之敘述事物，如果同意，輸入  
-  `yes`  
-   需登入帳號 (僅第一次)  
-   `login <帳號> <密碼>`  
-* 選擇書籍  
-  * 方法1: 根據用戶架`選擇書架`  
-    `shelf <書架編號>`  
-    根據該`書架中書籍邊號`選擇書籍  
-  `book <書架中書籍邊號>`  
-  * 方法2: 根據`書籍ID` `選擇書籍`  
-  `book <書籍ID>`  
-    * <書籍ID> 可以從網站該書頁的書籍網址  
-      範例網址: www.ciweimao.com/book/123456789  
-      範例網址尾部的"`123456789`" (9位數字)為`<書籍ID>`  
-    * 也可以在官方APP內書頁點選 "分享" -> "複製連結" 取得連結   
-* 書籍選擇後可開始下載書籍，輸入:  
+  * 首先執行  
+    `py run.py`  
+    確認仔細閱讀且同意README.md中之敘述事物，如果同意，輸入  
+    `yes`  
+     登入帳號，token 與 account 輸入
+     `i`  
+    進入匯入模式 提供2種匯入方式
+
+    1 . 由xml檔案方式匯入 需從手機APP獲取 `/data/data/com.kuangxiangciweimao.novel/shared_prefs/com.kuangxiangciweimao.novel_preferences.xml`
+    後放置於工作目錄後選擇第`1`選項
+    獲取`com.kuangxiangciweimao.novel_preferences.xml`提供2方案
+    
+    對於root android 可嘗試
+    ```
+    adb shell
+    su
+    chmod 777 /data/data/com.kuangxiangciweimao.novel/shared_prefs/com.kuangxiangciweimao.novel_preferences.xml
+    exit
+    exit
+    adb pull /data/data/com.kuangxiangciweimao.novel/shared_prefs/com.kuangxiangciweimao.novel_preferences.xml
+    ```
+    非root android 可嘗試
+    ```
+    備份data/data/com.kuangxiangciweimao.novel
+    adb backup -f data -noapk com.kuangxiangciweimao.novel
+    使用https://github.com/nelenkov/android-backup-extractor 將data轉成tar
+    java -jar .\abe.jar unpack data data.tar
+    再用7z或其他壓縮軟件解壓所
+    "C:\Program Files\7-Zip\7z.exe" x .\data.tar
+    後獲取檔案xml
+    "apps\com.kuangxiangciweimao.novel\sp\com.kuangxiangciweimao.novel_preferences.xml"
+    ```
+    2 . 利用抓包軟體讀取payload中的`login_token`與 `account` 後手動輸入
+    * login_token 為32位數16進位字串
+    * account 類似`书客123456789`字串
+    
+  * 選擇書籍  
+    * 方法1: 根據用戶架`選擇書架`  
+      `shelf <書架編號>`  
+      根據該`書架中書籍邊號`選擇書籍  
+    `book <書架中書籍邊號>`  
+    * 方法2: 根據`書籍ID` `選擇書籍`  
+    `book <書籍ID>`  
+      * <書籍ID> 可以從網站該書頁的書籍網址  
+        範例網址: www.ciweimao.com/book/123456789  
+        範例網址尾部的"`123456789`" (9位數字)為`<書籍ID>`  
+      * 也可以在官方APP內書頁點選 "分享" -> "複製連結" 取得連結   
+  * 書籍選擇後可開始下載書籍，輸入:  
 `download`  
-  * 指定編號 + 下載:  
-  `download <書架中書籍編號>`  
-  可跳過`book <書架中書籍邊號>`指令，但必須已選書架(法1)  
-  *  指定書籍ID + 下載  
-  `download <書籍ID>`  
-    可以跳過`選擇書籍`步驟，直接進行下載，但須預先知道ID
+    * 指定編號 + 下載:  
+    `download <書架中書籍編號>`  
+    可跳過`book <書架中書籍邊號>`指令，但必須已選書架(法1)  
+    *  指定書籍ID + 下載  
+    `download <書籍ID>`  
+      可以跳過`選擇書籍`步驟，直接進行下載，但須預先知道ID
      
 ## 其他功能  
   ### 下載整個書架 (若書架長，不建議使用)輸入  

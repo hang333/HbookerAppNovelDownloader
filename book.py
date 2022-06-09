@@ -70,14 +70,14 @@ class Book:
               self.last_chapter_info['uptime'], msg.m('show_last_chap_name'), self.chapter_list[-1]['chapter_title'])
 
     def fix_illegal_book_name(self):
-        # replace illegal characters with full of counterparts
+        # replace illegal characters with full-width counterparts
         return self.book_name.replace('<', '＜').replace('>', '＞').replace(':', '：').replace('"', '“') \
             .replace('/', '╱').replace('|', '｜').replace('?', '？').replace('*', '＊')
 
     def fix_illegal_book_name_dir(self):
         # remove spaces at the end
-        # if last character is '.' replace with full width '．'
-        # replace illegal characters with full of counterparts
+        # if last character is '.' replace with full-width '．'
+        # replace illegal characters with full-width counterparts
         return re.sub('^(.+)\\.\\s*$', '\\1．', self.book_name).replace('<', '＜').replace('>', '＞').replace(':', '：') \
             .replace('"', '“').replace('/', '╱').replace('|', '｜').replace('?', '？').replace('*', '＊')
 
