@@ -283,6 +283,10 @@ def setup_config():
         config_change = True
     HbookerAPI.common_params['app_version'] = Vars.cfg.data['current_app_version']
 
+    if type(Vars.cfg.data.get('token_mode')) is not bool:
+        Vars.cfg.data['token_mode'] = False
+        config_change = True
+
     # if type(Vars.cfg.data.get('export_epub')) is not bool:
     #     Vars.cfg.data['export_txt'] = True
     #     config_change = True
@@ -337,10 +341,37 @@ def import_token():
         HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
         print(user_token)
     print(msg.m('import_token_complete'))
+    token_test()
+
+
+def toggle_token_device():
+    if type(Vars.cfg.data.get('common_params')) is dict:
+        if 'device_token' in Vars.cfg.data.get('common_params'):
+            Vars.cfg.data['common_params'].pop('device_token')
+            HbookerAPI.common_params.pop('device_token')
+        else:
+            Vars.cfg.data['common_params'].update({'device_token': 'ciweimao_'})
+            HbookerAPI.common_params.update({'device_token': 'ciweimao_'})
+        Vars.cfg.save()
+
+
+def token_test():
+    login_in_test = HbookerAPI.CheckIn.get_check_in_records()
+    if login_in_test.get('code') == '100000':
+        print('login success')
+        return
+    elif login_in_test.get('code') == '200100':
+        toggle_token_device()
+    else:
+        return
+
+    login_in_test = HbookerAPI.CheckIn.get_check_in_records()
+    if login_in_test.get('code') != '100000':
+        print(msg.m('not_login_pl_login'))
 
 
 def shell():
-    if Vars.cfg.data.get('user_code') is not None:
+    if Vars.cfg.data.get('common_params') is not None:
         HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
         if len(sys.argv) > 1:
             if str(sys.argv[1]).startswith('t'):

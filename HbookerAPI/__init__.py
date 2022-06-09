@@ -1,8 +1,9 @@
 from HbookerAPI import HttpUtil, CryptoUtil, UrlConstants
 import json
 
-# common_params = {'account': None, 'login_token': None, 'app_version': '2.7.039'}  # 舊版token
-common_params = {'account': None, 'login_token': None, 'app_version': '2.9.290', 'device_token': 'ciweimao_'}  # 新token
+# 某些帳號要'device_token': 'ciweimao_'才能登入
+common_params = {'account': None, 'login_token': None, 'app_version': '2.7.039'}
+# common_params = {'account': None, 'login_token': None, 'app_version': '2.9.290', 'device_token': 'ciweimao_'}
 
 
 def set_common_params(params):
