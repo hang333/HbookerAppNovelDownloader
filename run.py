@@ -5,8 +5,9 @@ import datetime
 import msg
 import sys
 import re
+import token_parser
 
-default_current_app_version = "2.7.039"
+default_current_app_version = "2.9.290"
 
 
 def refresh_bookshelf_list():
@@ -24,6 +25,7 @@ def refresh_bookshelf_list():
 
 
 def shell_login(inputs):
+    print('！！！此登入法已失效！！！保留測試用 20220609 ')
     if len(inputs) == 1 and Vars.cfg.data.get('user_account') is not None and \
             Vars.cfg.data.get('user_password') is not None:
         pass
@@ -150,10 +152,10 @@ def shell_download_shelf(inputs):
 
 
 def check_in_today():
-    if Vars.cfg.data.get('user_account') is None or Vars.cfg.data.get('user_account') == "" \
-            or Vars.cfg.data.get('user_password') is None or Vars.cfg.data.get('user_password') == "":
-        print(msg.m('not_login_pl_login'))
-        return False
+    # if Vars.cfg.data.get('user_account') is None or Vars.cfg.data.get('user_account') == "" \
+    #         or Vars.cfg.data.get('user_password') is None or Vars.cfg.data.get('user_password') == "":
+    #     print(msg.m('not_login_pl_login'))
+    #     return False
     check_in_records = HbookerAPI.CheckIn.get_check_in_records()
     if check_in_records.get('code') == '100000':
         if check_in_today_do(check_in_records):
@@ -164,25 +166,26 @@ def check_in_today():
         # {'code': '200001', 'tip': '缺少登录必需参数'}
         # {'code': '310002', 'tip': '此账户未实名认证，请先绑定手机'}
         # {'code': '240001', 'tip': '注册超过24小时的用户才能签到哦~'}
+        print(check_in_records)
         print(msg.m('not_login_pl_login'))
         return False
-    elif check_in_records.get('code') == '200100':
-        # {'code': '200100', 'tip': '登录状态过期，请重新登录'}
-        print(msg.m('check_in_token_failed'))
-        if shell_login(['']):
-            print(msg.m('check_in_re_login_retry_check_in'))
-            check_in_records = HbookerAPI.CheckIn.get_check_in_records()
-            if check_in_records.get('code') == '100000':
-                if check_in_today_do(check_in_records):
-                    return True
-                else:
-                    return False
-            else:
-                print(msg.m('check_in_error_1') + str(check_in_records) + '\n')
-                return False
-        else:
-            print(msg.m('check_in_re_login_failed'))
-            return False
+    # elif check_in_records.get('code') == '200100':
+    #     # {'code': '200100', 'tip': '登录状态过期，请重新登录'}
+    #     print(msg.m('check_in_token_failed'))
+    #     if shell_login(['']):
+    #         print(msg.m('check_in_re_login_retry_check_in'))
+    #         check_in_records = HbookerAPI.CheckIn.get_check_in_records()
+    #         if check_in_records.get('code') == '100000':
+    #             if check_in_today_do(check_in_records):
+    #                 return True
+    #             else:
+    #                 return False
+    #         else:
+    #             print(msg.m('check_in_error_1') + str(check_in_records) + '\n')
+    #             return False
+    #     else:
+    #         print(msg.m('check_in_re_login_failed'))
+    #         return False
     else:
         print(msg.m('check_in_error_2') + str(check_in_records) + '\n')
         return False
@@ -314,6 +317,28 @@ def get_app_update_version_info():
         print("error response: " + str(response))
 
 
+def import_token():
+    print(msg.m('login_method_change_message'))
+    import_method = input('1/2: ')
+    if import_method == '1':
+        user_token = token_login.token_from_novel_preferences_xml()
+        Vars.cfg.data['reader_name'] = user_token.get('reader_name')
+        Vars.cfg.data['user_code'] = user_token.get('user_code')
+        Vars.cfg.data['common_params'] = {'login_token': user_token.get('login_token'),
+                                          'account': user_token.get('account')}
+        Vars.cfg.save()
+        HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
+        print(user_token)
+    else:
+        user_token = token_login.token_from_input()
+        Vars.cfg.data['common_params'] = {'login_token': user_token.get('login_token'),
+                                          'account': user_token.get('account')}
+        Vars.cfg.save()
+        HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
+        print(user_token)
+    print(msg.m('import_token_complete'))
+
+
 def shell():
     if Vars.cfg.data.get('user_code') is not None:
         HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
@@ -357,6 +382,9 @@ def shell():
             sys.exit()
         elif inputs[0].startswith('l'):
             shell_login(inputs)
+            check_in_today()
+        elif inputs[0].startswith('i'):
+            import_token()
             check_in_today()
         elif inputs[0].startswith('s'):
             shell_bookshelf(inputs)

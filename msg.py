@@ -3,12 +3,22 @@ _TC = {
     # msg
     'lang': "提示訊息切換為繁體中文",
     # run
-    'read_readme': "!!使用前請仔細閱讀README.md!!  !!使用前請仔細閱讀README.md!!\n\n!!使用前請仔細閱讀README.md!!  "
-                   "!使用前請仔細閱讀README.md!!\n\n!!使用前請仔細閱讀README.md!!  !!使用前請仔細閱讀README.md!!\n\n",
-    'agree_terms': "是否以仔細閱讀且同意README.md中敘述事物\n如果兩者回答皆為\"是\"，請輸入英文 \"yes\" 後按Enter建，如果不同意請關閉此程式\n",
+    'read_readme': """!!匯出書籍僅供自己保存閱讀禁止傳播!!  !!使用前請仔細閱讀README.md!!
+
+!!匯出書籍僅供自己保存閱讀禁止傳播!!  !!使用前請仔細閱讀README.md!!
+
+!!匯出書籍僅供自己保存閱讀禁止傳播!!  !!使用前請仔細閱讀README.md!!\n\n""",
+    'agree_terms': """是否同意匯出書籍僅供自己保存閱讀，不傳播給他人
+是否已仔細閱讀且同意README.md中敘述事物
+如果兩者回答皆為\"是\"，請輸入英文 \"yes\" 後按Enter建，如果不同意請關閉此程式\n""",
     'not_login_pl_login': "未登入，請先登入",
     'input_correct_var': "請輸入正確的參數",
     'login_success_user': "登錄成功, 用戶暱稱為: ",
+    'login_method_change_message': """現在登入需要校驗，因此改為使用Token方式登入
+選擇匯入方式
+1) 匯入com.kuangxiangciweimao.novel_preferences.xml
+2) 手動輸入""",
+    'import_token_complete': 'Token已匯入',
     'error_response': "Error: ",
     'picked_shelf_s': "選擇書架: \"",
     'picked_shelf_e': "\"",
@@ -80,7 +90,8 @@ h | help\t\t\t\t\t\t--- 顯示說明 (此訊息)
 m | message\t\t\t\t\t\t--- 切換提示訊息 (繁體/簡體)
 q | quit\t\t\t\t\t\t--- 退出腳本
 version\t\t\t\t\t\t\t--- 從網路獲取現在版本號，詢問是否刷新版本號 (輸入完整單字)
-l | login <手機號/郵箱/用戶名> <密碼>\t\t\t--- 登錄歡樂書客帳號
+i | import_token\t\t\t\t--- 以匯入token方式登入帳號
+l | login <手機號/郵箱/用戶名> <密碼>\t\t\t--- 登錄歡樂書客帳號！！！已失效！！！
 t | task\t\t\t\t\t\t--- 執行每日簽到，領代幣 (啟動時自動執行，無異常不需再次執行)
 s | shelf\t\t\t\t\t\t--- 刷新並顯示當前書架列表 (啟動時會自動刷新1次)
 s <書架編號> | shelf <書架編號>\t\t\t\t--- 選擇與切換書架
@@ -88,7 +99,7 @@ b | book\t\t\t\t\t\t--- 刷新並顯示當前書架的書籍列表
 b <書籍編號/書籍ID> | book <書籍編號/書籍ID>\t\t--- 選擇書籍
 d | download\t\t\t\t\t\t--- 下載當前書籍(book時選擇的書籍)
 d <書籍編號/書籍ID> | download <書籍編號/書籍ID>\t--- 下載指定ID書籍
-ds <書架編號> | downloadshelf <書架編號> \t\t--- 下載整個書架
+ds <書架編號> | download_shelf <書架編號> \t\t--- 下載整個書架
 u | update\t\t\t\t\t\t--- 下載"list.txt"書單之中所列書籍
 u <path.txt> | update <path.txt>\t\t\t--- 下載指定書單中所列書籍
 """
@@ -98,12 +109,22 @@ _SC = {
     # msg
     'lang': "提示讯息切换为简体中文",
     # run
-    'read_readme': "!!使用前请仔细阅读README.md!!  !!使用前请仔细阅读README.md!!\n\n!!使用前请仔细阅读README.md!!  "
-                   "!使用前请仔细阅读README.md!!\n\n!!使用前请仔细阅读README.md!!  !!使用前请仔细阅读README.md!!\n\n",
-    'agree_terms': "是否以仔细阅读且同意README.md中叙述事物\n如果两者回答皆为\"是\"，请输入英文 \"yes\" 后按Enter建，如果不同意请关闭此程式\n",
+    'read_readme': """!!汇出书籍仅供自己保存阅读禁止传播!!  !!使用前请仔细阅读README.md!!
+    
+!!汇出书籍仅供自己保存阅读禁止传播!!  !!使用前请仔细阅读README.md!!
+
+!!汇出书籍仅供自己保存阅读禁止传播!!  !!使用前请仔细阅读README.md!!\n\n""",
+    'agree_terms': """是否同意汇出书籍仅供自己保存阅读，不传播给他人
+是否已仔细阅读且同意README.md中叙述事物
+如果两者回答皆为\"是\"，请输入英文 \"yes\" 后按Enter建，如果不同意请关闭此程式\n""",
     'not_login_pl_login': "未登入，请先登入",
     'input_correct_var': "请输入正确的参数",
     'login_success_user': "登录成功, 用户暱称为: ",
+    'login_method_change_message': """现在登入需要校验，因此改为使用Token方式登入
+选择汇入方式
+1) 汇入com.kuangxiangciweimao.novel_preferences.xml
+2) 手动输入""",
+    'import_token_complete': 'Token已汇入',
     'error_response': "Error: ",
     'picked_shelf_s': "选择书架: \"",
     'picked_shelf_e': "\"",
@@ -175,7 +196,8 @@ h | help\t\t\t\t\t\t--- 显示说明 (显示此讯息)
 m | message\t\t\t\t\t\t--- 切换提示讯息 (繁体/简体)
 q | quit\t\t\t\t\t\t--- 退出脚本
 version\t\t\t\t\t\t\t--- 从网路获取现在版本号，询问是否刷新版本号 (输入完整单字)
-l | login <手机号/邮箱/用户名> <密码>\t\t\t--- 登录欢乐书客帐号
+i | import_token\t\t\t\t--- 以匯入token方式登入帳號
+l | login <手機號/郵箱/用戶名> <密碼>\t\t\t--- 登錄歡樂書客帳號！！！已失效！！！
 t | task\t\t\t\t\t\t--- 执行每日签到，领代币 (启动时自动执行，无异常不需再次执行)
 s | shelf\t\t\t\t\t\t--- 刷新并显示当前书架列表 (启动时会自动刷新1次)
 s <书架编号> | shelf <书架编号>\t\t\t\t--- 选择与切换书架
@@ -183,7 +205,7 @@ b | book\t\t\t\t\t\t--- 刷新并显示当前书架的书籍列表
 b <书籍编号/书籍ID> | book <书籍编号/书籍ID>\t\t--- 选择书籍
 d | download\t\t\t\t\t\t--- 下载当前书籍(book时选择的书籍)
 d <书籍编号/书籍ID> | download <书籍编号/书籍ID>\t--- 下载指定ID书籍
-ds <书架编号> | downloadshelf <书架编号> \t\t--- 下载整个书架
+ds <书架编号> | download_shelf <书架编号> \t\t--- 下载整个书架
 u | update\t\t\t\t\t\t--- 下载"list.txt"书单之中所列书籍
 u <path.txt> | update <path.txt>\t\t\t--- 下载指定书单中所列书籍
 """
