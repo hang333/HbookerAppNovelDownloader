@@ -321,7 +321,7 @@ def import_token():
     print(msg.m('login_method_change_message'))
     import_method = input('1/2: ')
     if import_method == '1':
-        user_token = token_login.token_from_novel_preferences_xml()
+        user_token = token_parser.token_from_novel_preferences_xml()
         Vars.cfg.data['reader_name'] = user_token.get('reader_name')
         Vars.cfg.data['user_code'] = user_token.get('user_code')
         Vars.cfg.data['common_params'] = {'login_token': user_token.get('login_token'),
@@ -330,7 +330,7 @@ def import_token():
         HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
         print(user_token)
     else:
-        user_token = token_login.token_from_input()
+        user_token = token_parser.token_from_input()
         Vars.cfg.data['common_params'] = {'login_token': user_token.get('login_token'),
                                           'account': user_token.get('account')}
         Vars.cfg.save()
