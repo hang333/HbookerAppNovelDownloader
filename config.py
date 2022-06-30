@@ -34,7 +34,7 @@ class Config:
             if not os.path.isdir(self.dir_path):
                 os.makedirs(self.dir_path)
             with open(self.file_path, 'w') as f:
-                json.dump(self.data, f)
+                json.dump(self.data, f, sort_keys=True, indent=4)
         except Exception as e:
             print('error: ', e)
             print('error: while saving config file: ' + self.file_path)

@@ -47,7 +47,7 @@ def shell_login(inputs):
         return True
     else:
         # print("response logon: " + str(response))
-        print(response.get('tip'))
+        print(response)
         return False
 
 
@@ -94,6 +94,8 @@ def shell_select_books(inputs):
         print('《' + Vars.current_book.book_name + '》')
         Vars.current_book.get_division_list()
         Vars.current_book.get_chapter_catalog()
+        # with open('test/book info.json', 'w') as f:
+        #     json.dump({'book_info': response['data']['book_info'], 'division_list': Book.division_list}, f, indent=4)
         if len(inputs) < 3:
             Vars.current_book.show_division_list()
             Vars.current_book.show_latest_chapter()
@@ -283,10 +285,6 @@ def setup_config():
         config_change = True
     HbookerAPI.common_params['app_version'] = Vars.cfg.data['current_app_version']
 
-    if type(Vars.cfg.data.get('token_mode')) is not bool:
-        Vars.cfg.data['token_mode'] = False
-        config_change = True
-
     # if type(Vars.cfg.data.get('export_epub')) is not bool:
     #     Vars.cfg.data['export_txt'] = True
     #     config_change = True
@@ -332,6 +330,8 @@ def import_token():
                                           'account': user_token.get('account')}
         Vars.cfg.save()
         HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
+        if HbookerAPI.common_params.get('device_token') is not None:
+            HbookerAPI.common_params.pop('device_token')
         print(user_token)
     else:
         user_token = token_parser.token_from_input()
@@ -349,9 +349,11 @@ def toggle_token_device():
         if 'device_token' in Vars.cfg.data.get('common_params'):
             Vars.cfg.data['common_params'].pop('device_token')
             HbookerAPI.common_params.pop('device_token')
+            print('remove device_token\': \'ciweimao_')
         else:
             Vars.cfg.data['common_params'].update({'device_token': 'ciweimao_'})
             HbookerAPI.common_params.update({'device_token': 'ciweimao_'})
+            print('add device_token\': \'ciweimao_')
         Vars.cfg.save()
 
 
@@ -433,6 +435,8 @@ def shell():
             shell_switch_message_charter_set()
         elif inputs[0].startswith('version'):
             get_app_update_version_info()
+        # elif inputs[0].startswith('p'):
+        #     toggle_token_device()
         else:
             print(msg.m('help_msg'))
         if loop is False:
