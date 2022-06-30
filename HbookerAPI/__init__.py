@@ -16,10 +16,11 @@ def get(api_url, params=None, **kwargs):
     if params is not None:
         params.update(common_params)
     api_url = api_url.replace(UrlConstants.WEB_SITE, '')
+    # print('get', UrlConstants.WEB_SITE + api_url, params)
     try:
         return json.loads(CryptoUtil.decrypt(HttpUtil.get(UrlConstants.WEB_SITE + api_url, params=params, **kwargs)))
     except Exception as error:
-        print("post error:", error)
+        print("get error:", error)
 
 
 def post(api_url, data=None, **kwargs):
@@ -28,6 +29,7 @@ def post(api_url, data=None, **kwargs):
     if data is not None:
         data.update(common_params)
     api_url = api_url.replace(UrlConstants.WEB_SITE, '')
+    # print('post', UrlConstants.WEB_SITE + api_url, data)
     try:
         return json.loads(CryptoUtil.decrypt(HttpUtil.post(UrlConstants.WEB_SITE + api_url, data=data, **kwargs)))
     except Exception as error:
@@ -56,11 +58,11 @@ class Book:
     @staticmethod
     def get_division_list(book_id):
         data = {'book_id': book_id}
-        return get(UrlConstants.GET_DIVISION_LIST, data)
+        return post(UrlConstants.GET_DIVISION_LIST, data)
 
     @staticmethod
     def get_updated_chapter_by_division_new(book_id: str):
-        return get(UrlConstants.GET_DIVISION_LIST_NEW, {'book_id': book_id})
+        return post(UrlConstants.GET_DIVISION_LIST_NEW, {'book_id': book_id})
 
     @staticmethod
     def get_chapter_update(division_id, last_update_time='0'):
@@ -77,25 +79,25 @@ class Chapter:
     @staticmethod
     def get_chapter_command(chapter_id):
         data = {'chapter_id': chapter_id}
-        return get(UrlConstants.GET_CHAPTER_COMMAND, data)
+        return post(UrlConstants.GET_CHAPTER_COMMAND, data)
 
     @staticmethod
     def get_cpt_ifm(chapter_id, chapter_command):
         data = {'chapter_id': chapter_id, 'chapter_command': chapter_command}
-        return get(UrlConstants.GET_CPT_IFM, data)
+        return post(UrlConstants.GET_CPT_IFM, data)
 
 
 class CheckIn:
     @staticmethod
     def get_check_in_records():
-        return get(UrlConstants.SIGN_RECORD, {})
+        return post(UrlConstants.SIGN_RECORD, {})
 
     @staticmethod
     def do_check_in():
-        return get(UrlConstants.SING_RECORD_TASK, {'task_type': 1})
+        return post(UrlConstants.SING_RECORD_TASK, {'task_type': 1})
 
 
 class CheckAppVersion:
     @staticmethod
     def get_version():
-        return get(UrlConstants.MY_SETTING_UPDATE)
+        return post(UrlConstants.MY_SETTING_UPDATE)
