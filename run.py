@@ -215,6 +215,9 @@ def check_in_today_do(check_in_records):
                 elif check_in.get('code') == '340001':
                     print(msg.m('check_in_no_redo'))
                     return True
+                elif check_in.get('code') == '310002':
+                    print(msg.m('check_in_no_certification'))
+                    return True
                 else:
                     print(msg.m('check_in_failed') + str(check_in) + '\n')
                     return False
