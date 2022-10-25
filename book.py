@@ -1,6 +1,7 @@
 from Epub import *
 import HbookerAPI
 import threading
+import cache
 import queue
 import msg
 import os
@@ -47,8 +48,13 @@ class Book:
         response = HbookerAPI.Book.get_updated_chapter_by_division_new(self.book_id)
         if response.get('code') == '100000':
             self.division_list = response['data']['chapter_list']
+            cache.save_cache(f"{self.book_id}_chapter_list.json", self.division_list)
         else:
-            print(msg.m('failed_get_div') + str(response))
+            division_list = cache.test_division_list(self.book_id)
+            if division_list:
+                self.division_list = division_list
+            else:
+                print(msg.m('failed_get_div') + str(response))
 
     def show_division_list(self):
         print('\r', end='')

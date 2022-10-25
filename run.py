@@ -87,7 +87,7 @@ def shell_select_books(inputs):
             print('input', inputs[1], 'not a book ID, ID should be a 9 digit number')
             return
         # update book info
-        cache.save_cache(Vars.current_book.book_id, Vars.current_book.book_info)
+        cache.save_cache(f"{Vars.current_book.book_id}.json", Vars.current_book.book_info)
 
         print('《' + Vars.current_book.book_name + '》')
         Vars.current_book.get_division_list()
