@@ -75,7 +75,7 @@ def shell_select_books(inputs):
             if Vars.current_book is None:
                 print(msg.m('failed_get_book_info_index'), inputs[1])
                 return
-        if re.match('^[0-9]{9,}$', inputs[1]):
+        elif re.match('^[0-9]{9,}$', inputs[1]):
             Vars.current_book = HbookerAPI.Book.get_info_by_id(inputs[1])
             if Vars.current_book.get('code') == '100000':
                 Vars.current_book = Book(None, Vars.current_book['data']['book_info'])
