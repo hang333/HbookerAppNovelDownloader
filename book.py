@@ -161,7 +161,9 @@ class Book:
         for thread in threads:
             thread.join()
         print(msg.m('dl_fin'), end='')
-
+        # bookshelf description is not available
+        if self.book_info.get("description") is None:
+            self.book_info["description"] = ""
         if self.downloaded_count == 0:
             if os.path.exists(self.epub.tempdir + '/OEBPS/Text'):
                 text_mod_time = os.path.getmtime(self.epub.tempdir + '/OEBPS/Text')
@@ -233,7 +235,8 @@ class Book:
                 if chapter_title == "该章节未审核通过":
                     print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + "-" +
                           str(chapter_order).rjust(6, "0") + "-" + chapter_id +
-                          msg.m('dl_chap_block_c') + division_name + '：' + chapter_title + " : 分辨屏蔽章節下載: 標題 #2 " +
+                          msg.m(
+                              'dl_chap_block_c') + division_name + '：' + chapter_title + " : 分辨屏蔽章節下載: 標題 #2 " +
                           str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " +
                           str(len(self.chapter_list)), end=' ')
                 else:
