@@ -6,6 +6,7 @@ import msg
 import sys
 import re
 import token_parser
+import cache
 
 default_current_app_version = "2.9.290"
 
@@ -71,25 +72,22 @@ def shell_select_books(inputs):
         Vars.current_book = None
         if Vars.current_bookshelf is not None:
             Vars.current_book = Vars.current_bookshelf.get_book(inputs[1])
-            if Vars.current_book is not None:
-                response = HbookerAPI.Book.get_info_by_id(Vars.current_book.book_id)
-                if response.get('code') == '100000':
-                    Vars.current_book = Book(None, response['data']['book_info'])
-                else:
-                    print(msg.m('failed_get_book_info_index'), inputs[1])
-                    return
-        if Vars.current_book is None:
-            if re.match('^[0-9]{9,}$', inputs[1]):
-                response = HbookerAPI.Book.get_info_by_id(inputs[1])
-                if response.get('code') == '100000':
-                    # print(response['data']['book_info'])
-                    Vars.current_book = Book(None, response['data']['book_info'])
-                else:
-                    print(msg.m('failed_get_book_info_id'), inputs[1])
-                    return
-            else:
-                print('input', inputs[1], 'not a book ID, ID should be a 9 digit number')
+            if Vars.current_book is None:
+                print(msg.m('failed_get_book_info_index'), inputs[1])
                 return
+        if re.match('^[0-9]{9,}$', inputs[1]):
+            Vars.current_book = HbookerAPI.Book.get_info_by_id(inputs[1])
+            if Vars.current_book.get('code') == '100000':
+                Vars.current_book = Book(None, Vars.current_book['data']['book_info'])
+            else:
+                # test local cache and init a book.Book
+                if not cache.test_cache_and_init_object(inputs[1]):
+                    return
+        else:
+            print('input', inputs[1], 'not a book ID, ID should be a 9 digit number')
+            return
+        # update book info
+        cache.save_cache(Vars.current_book.book_id, Vars.current_book.book_info)
 
         print('《' + Vars.current_book.book_name + '》')
         Vars.current_book.get_division_list()
@@ -216,7 +214,7 @@ def check_in_today_do(check_in_records):
                     print(msg.m('check_in_no_redo'))
                     return True
                 elif check_in.get('code') == '310002':
-                    print(msg.m('check_in_no_certification'))
+                    print(msg.m('check_in_failed') + msg.m('check_in_no_certification'))
                     return True
                 else:
                     print(msg.m('check_in_failed') + str(check_in) + '\n')
