@@ -145,8 +145,9 @@ def shell_download_shelf(inputs):
     if len(inputs) >= 2:
         shell_bookshelf(inputs)
     if Vars.current_bookshelf is not None:
-        for book in Vars.current_bookshelf.BookList:
-            shell_download_book(['', book.book_id])
+        for bookshelf_index, book in enumerate(Vars.current_bookshelf.BookList, start=1):
+            # shell_download_book(['', book.book_id])
+            shell_download_book(['', str(bookshelf_index)])  # check if bookshelf_index is correct and download
     else:
         print(msg.m('not_picked_shelf'))
 
