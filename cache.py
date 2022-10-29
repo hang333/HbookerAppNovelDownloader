@@ -3,15 +3,20 @@ import book
 
 
 def save_cache(file_name: str, response: dict) -> None:
-    if not os.path.exists('Localcache'):
-        os.mkdir('Localcache')
-    with open(f'Localcache/{file_name}', 'w', encoding='utf-8') as book_info_file:
-        json.dump(response, book_info_file, ensure_ascii=False, indent=4)
+    if not os.path.exists(Vars.cfg.data['local_cache_dir']):
+        os.mkdir(Vars.cfg.data['local_cache_dir'])
+    if Vars.cfg.data.get('backups_local_cache'):
+        with open(f"{Vars.cfg.data['local_cache_dir']}/{file_name}", 'w', encoding='utf-8') as book_info_file:
+            json.dump(response, book_info_file, ensure_ascii=False, indent=4)
+    else:
+        print("未开启本地缓存备份，已跳过本地缓存备份步骤, 请在配置文件中开启本地缓存备份。")
 
 
 def load_cache(file_name: str) -> dict:
-    if os.path.exists(f'Localcache/{file_name}') and os.path.getsize(f'Localcache/{file_name}') > 0:
-        with open(f'Localcache/{file_name}', 'r', encoding='utf-8') as book_info_file:
+    local_cache_dir = f"{Vars.cfg.data['local_cache_dir']}/{file_name}"
+    if os.path.exists(local_cache_dir) and \
+            os.path.getsize(local_cache_dir) > 0:
+        with open(local_cache_dir, 'r', encoding='utf-8') as book_info_file:
             return json.load(book_info_file)
     else:
         print(f'{file_name} not found.')

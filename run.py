@@ -70,7 +70,7 @@ def shell_bookshelf(inputs):
 def shell_select_books(inputs):
     if len(inputs) >= 2:
         Vars.current_book = None
-        if Vars.current_bookshelf is not None:
+        if Vars.current_bookshelf is not None and not re.match('^[0-9]{9,}$', inputs[1]):
             Vars.current_book = Vars.current_bookshelf.get_book(inputs[1])
             if Vars.current_book is None:
                 print(msg.m('failed_get_book_info_index'), inputs[1])
@@ -267,6 +267,14 @@ def setup_config():
 
     if type(Vars.cfg.data.get('output_dir')) is not str or Vars.cfg.data.get('output_dir') == "":
         Vars.cfg.data['output_dir'] = "./Hbooker/"
+        config_change = True
+
+    if type(Vars.cfg.data.get('local_cache_dir')) is not str or Vars.cfg.data.get('local_cache_dir') == "":
+        Vars.cfg.data['local_cache_dir'] = "./LocalCache/"
+        config_change = True
+
+    if not isinstance(Vars.cfg.data.get('backups_local_cache'), bool):
+        Vars.cfg.data['backups_local_cache'] = True
         config_change = True
 
     if type(Vars.cfg.data.get('do_backup')) is not bool:
