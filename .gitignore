@@ -11,6 +11,7 @@ __pycache__/
 build/
 Cache/
 Hbooker/
+LocalCache/
 develop-eggs/
 dist/
 downloads/

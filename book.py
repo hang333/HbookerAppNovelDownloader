@@ -50,11 +50,12 @@ class Book:
             self.division_list = response['data']['chapter_list']
             cache.save_cache(f"{self.book_id}_chapter_list.json", self.division_list)
         else:
+            print(msg.m('failed_get_div'), response.get('tip'))
             division_list = cache.test_division_list(self.book_id)
             if division_list:
                 self.division_list = division_list
             else:
-                print(msg.m('failed_get_div') + str(response))
+                exit(1)
 
     def show_division_list(self):
         print('\r', end='')
