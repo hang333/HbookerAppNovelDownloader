@@ -3,9 +3,9 @@ import book
 
 
 def save_cache(file_name: str, response: dict) -> None:
-    if not os.path.exists(Vars.cfg.data['local_cache_dir']):
-        os.mkdir(Vars.cfg.data['local_cache_dir'])
     if Vars.cfg.data.get('backups_local_cache'):
+        if not os.path.exists(Vars.cfg.data['local_cache_dir']):
+            os.mkdir(Vars.cfg.data['local_cache_dir'])
         with open(f"{Vars.cfg.data['local_cache_dir']}/{file_name}", 'w', encoding='utf-8') as book_info_file:
             json.dump(response, book_info_file, ensure_ascii=False, indent=4)
     # else:
