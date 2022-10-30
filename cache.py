@@ -8,8 +8,8 @@ def save_cache(file_name: str, response: dict) -> None:
     if Vars.cfg.data.get('backups_local_cache'):
         with open(f"{Vars.cfg.data['local_cache_dir']}/{file_name}", 'w', encoding='utf-8') as book_info_file:
             json.dump(response, book_info_file, ensure_ascii=False, indent=4)
-    else:
-        print("未开启本地缓存备份，已跳过本地缓存备份步骤, 请在配置文件中开启本地缓存备份。")
+    # else:
+    #     print("未开启本地缓存备份，已跳过本地缓存备份步骤, 请在配置文件中开启本地缓存备份。")
 
 
 def load_cache(file_name: str) -> dict:

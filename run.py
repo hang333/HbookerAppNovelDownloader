@@ -285,6 +285,10 @@ def setup_config():
         Vars.cfg.data['backup_dir'] = "./Hbooker/"
         config_change = True
 
+    if not isinstance(Vars.cfg.data.get('force_book_description'), bool):
+        Vars.cfg.data['force_book_description'] = True
+        config_change = True
+
     if type(Vars.cfg.data.get('max_concurrent_downloads')) is not int or \
             Vars.cfg.data.get('max_concurrent_downloads') < 1:
         Vars.cfg.data['max_concurrent_downloads'] = 8

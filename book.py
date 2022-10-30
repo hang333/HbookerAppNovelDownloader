@@ -170,7 +170,11 @@ class Book:
         print(msg.m('dl_fin'), end='')
         # bookshelf description is not available
         if self.book_info.get("description") is None:
-            self.book_info["description"] = ""
+            if Vars.cfg.data.get('force_book_description'):
+                Vars.current_book = Book(None, HbookerAPI.Book.get_info_by_id(self.book_id)['data']['book_info'])
+                self.book_info['description'] = Vars.current_book.book_info['description']
+            else:
+                self.book_info["description"] = ""
         if self.downloaded_count == 0:
             if os.path.exists(self.epub.tempdir + '/OEBPS/Text'):
                 text_mod_time = os.path.getmtime(self.epub.tempdir + '/OEBPS/Text')
