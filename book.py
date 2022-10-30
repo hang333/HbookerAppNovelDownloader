@@ -1,6 +1,7 @@
 from Epub import *
 import HbookerAPI
 import threading
+import cache
 import queue
 import msg
 import os
@@ -47,8 +48,14 @@ class Book:
         response = HbookerAPI.Book.get_updated_chapter_by_division_new(self.book_id)
         if response.get('code') == '100000':
             self.division_list = response['data']['chapter_list']
+            cache.save_cache(f"{self.book_id}_chapter_list.json", self.division_list)
         else:
-            print(msg.m('failed_get_div') + str(response))
+            print(msg.m('failed_get_div'), response.get('tip'))
+            division_list = cache.test_division_list(self.book_id)
+            if division_list:
+                self.division_list = division_list
+            else:
+                exit(1)
 
     def show_division_list(self):
         print('\r', end='')
@@ -161,7 +168,13 @@ class Book:
         for thread in threads:
             thread.join()
         print(msg.m('dl_fin'), end='')
-
+        # bookshelf description is not available
+        if self.book_info.get("description") is None:
+            if Vars.cfg.data.get('force_book_description'):
+                Vars.current_book = Book(None, HbookerAPI.Book.get_info_by_id(self.book_id)['data']['book_info'])
+                self.book_info['description'] = Vars.current_book.book_info['description']
+            else:
+                self.book_info["description"] = ""
         if self.downloaded_count == 0:
             if os.path.exists(self.epub.tempdir + '/OEBPS/Text'):
                 text_mod_time = os.path.getmtime(self.epub.tempdir + '/OEBPS/Text')
@@ -233,7 +246,8 @@ class Book:
                 if chapter_title == "该章节未审核通过":
                     print('\r' + chapter_index.rjust(5, "0") + ', ' + division_index.rjust(4, "0") + "-" +
                           str(chapter_order).rjust(6, "0") + "-" + chapter_id +
-                          msg.m('dl_chap_block_c') + division_name + '：' + chapter_title + " : 分辨屏蔽章節下載: 標題 #2 " +
+                          msg.m(
+                              'dl_chap_block_c') + division_name + '：' + chapter_title + " : 分辨屏蔽章節下載: 標題 #2 " +
                           str(self.downloaded_count) + ' / ' + str(self.process_finished_count) + " / " +
                           str(len(self.chapter_list)), end=' ')
                 else:
