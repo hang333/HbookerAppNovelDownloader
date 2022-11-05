@@ -26,7 +26,7 @@ def post(url, data=None, retry=maxRetry, **kwargs):
         try:
             return str(requests.post(url, data, headers=headers, **kwargs, timeout=requests_timeout).text)
         except requests.exceptions.RequestException as e:
-            print("\nGet Error Retry: " + str(e) + '\n' + url)
+            print("\nPost Error Retry: " + str(e) + '\n' + url)
             time.sleep(1 * count)
         except Exception as e:
             print(repr(e))
